@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="h-full">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -124,6 +124,60 @@
             border-color: #996D00 !important;
         }
 
+        /* Responsive table */
+        @media (max-width: 640px) {
+            .table-responsive {
+                display: block;
+                width: 100%;
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+            
+            .table-responsive thead {
+                display: none;
+            }
+            
+            .table-responsive tbody tr {
+                display: block;
+                margin-bottom: 1rem;
+                border: 1px solid #e5e7eb;
+                border-radius: 0.5rem;
+                background-color: white;
+            }
+            
+            .table-responsive td {
+                display: flex;
+                padding: 0.75rem !important;
+                border-bottom: 1px solid #e5e7eb;
+                text-align: right;
+            }
+            
+            .table-responsive td::before {
+                content: attr(data-label);
+                font-weight: 600;
+                margin-right: auto;
+                text-align: left;
+            }
+            
+            .table-responsive td:last-child {
+                border-bottom: none;
+            }
+        }
+
+        /* Responsive forms */
+        @media (max-width: 640px) {
+            .form-responsive {
+                display: flex;
+                flex-direction: column;
+                gap: 1rem;
+            }
+            
+            .form-responsive > div {
+                width: 100%;
+            }
+        }
+
+        /* Sticky footer */
         html, body {
             height: 100%;
         }
@@ -173,7 +227,7 @@
                         <div class="flex items-center space-x-4">
                             <span class="text-gray-700 text-base"><?= session()->get('user_name') ?></span>
                             <a href="<?= site_url('logout') ?>" 
-                               class="btn-primary px-6 py-3 rounded-lg text-base transition-colors duration-200">
+                               class="btn-primary px-4 py-2 rounded-lg text-base transition-colors duration-200">
                                 Logout
                             </a>
                         </div>
@@ -220,7 +274,7 @@
                     </div>
                     <div class="mt-3 px-2">
                         <a href="<?= site_url('logout') ?>"
-                           class="btn-primary block px-6 py-3 rounded-lg text-center text-base transition-colors duration-200">
+                           class="btn-primary block px-4 py-2 rounded-lg text-center text-base transition-colors duration-200">
                             Logout
                         </a>
                     </div>
@@ -230,7 +284,7 @@
     </nav>
 
     <!-- Main Content -->
-    <main class="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+    <main class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
         <?= $this->renderSection('content') ?>
     </main>
 

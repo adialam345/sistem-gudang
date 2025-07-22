@@ -33,12 +33,12 @@
 
     <!-- Search & Filter -->
     <div class="bg-white rounded-lg shadow-lg">
-        <div class="px-6 py-5 border-b border-gray-200">
+        <div class="px-4 sm:px-6 py-5 border-b border-gray-200">
             <h2 class="text-xl font-semibold text-gray-900">Filter & Pencarian</h2>
         </div>
-        <div class="px-6 py-5">
+        <div class="px-4 sm:px-6 py-5">
             <form id="searchForm" action="<?= site_url('barang-masuk') ?>" method="get">
-                <div class="grid grid-cols-1 gap-6 sm:grid-cols-4">
+                <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 form-responsive">
                     <div>
                         <label for="search" class="block text-sm font-medium text-gray-700">Cari</label>
                         <div class="mt-1">
@@ -78,28 +78,28 @@
 
     <!-- Table -->
     <div class="bg-white rounded-lg shadow-lg">
-        <div class="px-6 py-5 border-b border-gray-200">
+        <div class="px-4 sm:px-6 py-5 border-b border-gray-200">
             <h2 class="text-xl font-semibold text-gray-900">Daftar Barang Masuk</h2>
         </div>
-        <div class="px-6 py-5">
+        <div class="px-4 sm:px-6 py-5">
             <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-gray-200">
+                <table class="min-w-full divide-y divide-gray-200 table-responsive">
                     <thead class="bg-gray-50">
                         <tr>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tanggal</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">No Transaksi</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Kode Barang</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nama Barang</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Jumlah</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Supplier</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Keterangan</th>
-                            <th class="px-6 py-3"></th>
+                            <th class="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tanggal</th>
+                            <th class="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">No Transaksi</th>
+                            <th class="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Kode Barang</th>
+                            <th class="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nama Barang</th>
+                            <th class="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Jumlah</th>
+                            <th class="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Supplier</th>
+                            <th class="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Keterangan</th>
+                            <th class="px-4 sm:px-6 py-3"></th>
                         </tr>
                     </thead>
                     <tbody class="bg-white divide-y divide-gray-200">
                         <?php if (empty($barangMasuk)) : ?>
                             <tr>
-                                <td colspan="8" class="px-6 py-4 text-center text-sm text-gray-500">
+                                <td colspan="8" class="px-4 sm:px-6 py-4 text-center text-sm text-gray-500">
                                     <div class="flex flex-col items-center justify-center py-8">
                                         <svg class="w-12 h-12 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
@@ -111,18 +111,30 @@
                         <?php else : ?>
                             <?php foreach ($barangMasuk as $item) : ?>
                                 <tr class="hover:bg-gray-50">
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"><?= date('d/m/Y', strtotime($item['tanggal'])) ?></td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"><?= esc($item['no_transaksi']) ?></td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"><?= esc($item['kode_barang']) ?></td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"><?= esc($item['nama_barang']) ?></td>
-                                    <td class="px-6 py-4 whitespace-nowrap">
+                                    <td class="px-4 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-900" data-label="Tanggal">
+                                        <?= date('d/m/Y', strtotime($item['tanggal'])) ?>
+                                    </td>
+                                    <td class="px-4 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-900" data-label="No Transaksi">
+                                        <?= esc($item['no_transaksi']) ?>
+                                    </td>
+                                    <td class="px-4 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-900" data-label="Kode Barang">
+                                        <?= esc($item['kode_barang']) ?>
+                                    </td>
+                                    <td class="px-4 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-900" data-label="Nama Barang">
+                                        <?= esc($item['nama_barang']) ?>
+                                    </td>
+                                    <td class="px-4 sm:px-6 py-4 whitespace-nowrap" data-label="Jumlah">
                                         <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
                                             <?= number_format($item['jumlah']) ?> <?= esc($item['satuan']) ?>
                                         </span>
                                     </td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"><?= esc($item['supplier']) ?></td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"><?= esc($item['keterangan']) ?></td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                    <td class="px-4 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-900" data-label="Supplier">
+                                        <?= esc($item['supplier']) ?>
+                                    </td>
+                                    <td class="px-4 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-900" data-label="Keterangan">
+                                        <?= esc($item['keterangan']) ?>
+                                    </td>
+                                    <td class="px-4 sm:px-6 py-4 whitespace-nowrap text-right text-sm font-medium" data-label="Aksi">
                                         <a href="<?= site_url('barang-masuk/edit/' . $item['id']) ?>" 
                                            class="text-warehouse-600 hover:text-warehouse-900 mr-3">Edit</a>
                                         <form action="<?= site_url('barang-masuk/delete/' . $item['id']) ?>" method="post" class="inline">
