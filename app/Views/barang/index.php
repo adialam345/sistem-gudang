@@ -37,7 +37,7 @@
             <h2 class="text-xl font-semibold text-gray-900">Filter & Pencarian</h2>
         </div>
         <div class="px-4 sm:px-6 py-5">
-            <form id="searchForm" method="get">
+            <form id="searchForm" action="<?= site_url('barang') ?>" method="get">
                 <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 form-responsive">
                     <div>
                         <label for="search" class="block text-sm font-medium text-gray-700">Cari</label>

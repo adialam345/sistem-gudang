@@ -2,7 +2,7 @@
 <html lang="en" class="h-full">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title><?= $title ?? 'Sistem Gudang' ?></title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -27,11 +27,29 @@
                     fontFamily: {
                         sans: ['Inter', 'sans-serif'],
                     },
+                    screens: {
+                        'xs': '375px',
+                        'sm': '640px',
+                        'md': '768px',
+                        'lg': '1024px',
+                        'xl': '1280px',
+                    },
                 },
             },
         }
     </script>
     <style>
+        /* Reset and base styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            font-size: 16px;
+        }
+
         /* Custom scrollbar */
         ::-webkit-scrollbar {
             width: 12px;
@@ -55,6 +73,10 @@
             font-size: 16px;
             line-height: 1.6;
             color: #1a1a1a;
+            padding-top: 64px;
+            width: 100%;
+            min-width: 320px; /* Minimum width to prevent squishing */
+            overflow-x: hidden; /* Prevent horizontal scroll */
         }
         
         /* Better focus indicators */
@@ -77,12 +99,15 @@
         input, select, textarea {
             font-size: 16px !important;
             padding: 0.75rem 1rem !important;
+            width: 100%;
+            max-width: 100%;
         }
 
         /* Better table readability */
         table {
             border-spacing: 0;
             width: 100%;
+            max-width: 100%;
         }
         th {
             background-color: #FFF9E5 !important;
@@ -95,6 +120,7 @@
         td {
             padding: 1rem !important;
             font-size: 16px !important;
+            word-break: break-word;
         }
         tr:nth-child(even) {
             background-color: #FFF9E5;
@@ -150,6 +176,8 @@
                 padding: 0.75rem !important;
                 border-bottom: 1px solid #e5e7eb;
                 text-align: right;
+                align-items: center;
+                min-height: 48px;
             }
             
             .table-responsive td::before {
@@ -161,6 +189,13 @@
             
             .table-responsive td:last-child {
                 border-bottom: none;
+            }
+
+            /* Adjust action buttons on mobile */
+            .table-responsive td[data-label="Aksi"] {
+                display: flex;
+                gap: 1rem;
+                justify-content: flex-end;
             }
         }
 
@@ -175,6 +210,49 @@
             .form-responsive > div {
                 width: 100%;
             }
+
+            /* Adjust input sizes on mobile */
+            input, select, textarea {
+                font-size: 16px !important; /* Prevent zoom on iOS */
+            }
+        }
+
+        /* Container width adjustments */
+        .max-w-7xl {
+            width: 100%;
+            padding-left: 1rem;
+            padding-right: 1rem;
+        }
+
+        @media (min-width: 640px) {
+            .max-w-7xl {
+                padding-left: 1.5rem;
+                padding-right: 1.5rem;
+            }
+        }
+
+        /* Sticky navbar */
+        .navbar-fixed {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 50;
+            height: 64px;
+            background-color: white;
+            width: 100%;
+        }
+
+        /* Mobile menu adjustments */
+        #mobile-menu {
+            position: fixed;
+            top: 64px;
+            left: 0;
+            right: 0;
+            background-color: white;
+            border-bottom: 1px solid #e5e7eb;
+            z-index: 40;
+            width: 100%;
         }
 
         /* Sticky footer */
@@ -188,17 +266,43 @@
         }
         main {
             flex: 1 0 auto;
+            margin-top: 1rem;
+            width: 100%;
         }
         footer {
             flex-shrink: 0;
+        }
+
+        /* Welcome banner adjustments */
+        .welcome-banner {
+            margin-top: 1rem;
+        }
+
+        /* Responsive text adjustments */
+        @media (max-width: 640px) {
+            html {
+                font-size: 14px;
+            }
+            
+            h1 {
+                font-size: 1.5rem !important;
+            }
+            
+            h2 {
+                font-size: 1.25rem !important;
+            }
+            
+            .text-sm {
+                font-size: 0.875rem !important;
+            }
         }
     </style>
 </head>
 <body class="bg-gray-50 min-h-screen font-sans">
     <!-- Top Navigation -->
-    <nav class="bg-white shadow-lg border-b border-gray-200">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between h-20">
+    <nav class="navbar-fixed shadow-lg border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full">
+            <div class="flex justify-between items-center h-full">
                 <div class="flex">
                     <div class="flex-shrink-0 flex items-center">
                         <span class="text-2xl font-bold text-warehouse-500">SisGudang</span>
@@ -284,7 +388,7 @@
     </nav>
 
     <!-- Main Content -->
-    <main class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <?= $this->renderSection('content') ?>
     </main>
 
