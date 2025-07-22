@@ -7,11 +7,11 @@
         <div class="px-6 py-8 sm:px-8">
             <div class="flex items-center justify-between">
                 <div>
-                    <h1 class="text-2xl font-bold text-white sm:text-3xl">Data Barang</h1>
-                    <p class="mt-2 text-warehouse-100">Kelola data master barang dengan mudah dan efisien</p>
+                    <h1 class="text-2xl font-bold text-gray-900 sm:text-3xl">Data Barang</h1>
+                    <p class="mt-2 text-gray-900">Kelola data master barang dengan mudah dan efisien</p>
                 </div>
                 <div class="hidden sm:block">
-                    <svg class="w-24 h-24 text-warehouse-100" fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                    <svg class="w-24 h-24 text-gray-900" fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
                         <path d="M20 3H4c-1.103 0-2 .897-2 2v14c0 1.103.897 2 2 2h16c1.103 0 2-.897 2-2V5c0-1.103-.897-2-2-2zM4 19V5h16l.001 14H4z"/>
                         <path d="M6 7h12v2H6zm0 4h12v2H6zm0 4h6v2H6z"/>
                     </svg>

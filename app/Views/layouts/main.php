@@ -99,6 +99,31 @@
         tr:nth-child(even) {
             background-color: #FFF9E5;
         }
+
+        /* Ensure text contrast on yellow backgrounds */
+        [class*="bg-warehouse-"] {
+            color: #1a1a1a !important;
+        }
+        
+        /* Exception for primary buttons */
+        .bg-warehouse-500, 
+        .bg-warehouse-600,
+        .hover\:bg-warehouse-500:hover,
+        .hover\:bg-warehouse-600:hover {
+            color: #1a1a1a !important;
+        }
+
+        /* Fix navigation text colors */
+        .text-warehouse-500 {
+            color: #996D00 !important;
+        }
+        .hover\:text-warehouse-500:hover {
+            color: #996D00 !important;
+        }
+        .border-warehouse-500 {
+            border-color: #996D00 !important;
+        }
+
         html, body {
             height: 100%;
         }

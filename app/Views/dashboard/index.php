@@ -7,11 +7,11 @@
         <div class="px-6 py-8 sm:px-8">
             <div class="flex items-center justify-between">
                 <div>
-                    <h1 class="text-2xl font-bold text-white sm:text-3xl">Selamat Datang di SisGudang</h1>
-                    <p class="mt-2 text-warehouse-100">Sistem Informasi Pergudangan yang Memudahkan Pengelolaan Stok Anda</p>
+                    <h1 class="text-2xl font-bold text-gray-900 sm:text-3xl">Selamat Datang di SisGudang</h1>
+                    <p class="mt-2 text-gray-900">Sistem Informasi Pergudangan yang Memudahkan Pengelolaan Stok Anda</p>
                 </div>
                 <div class="hidden sm:block">
-                    <svg class="w-24 h-24 text-warehouse-100" fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                    <svg class="w-24 h-24 text-gray-900" fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
                         <path d="M20 8h-3V4H3c-1.1 0-2 .9-2 2v11h2c0 1.66 1.34 3 3 3s3-1.34 3-3h6c0 1.66 1.34 3 3 3s3-1.34 3-3h2v-5l-3-4zM6 18.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm13.5-9l1.96 2.5H17V9.5h2.5zm-1.5 9c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/>
                     </svg>
                 </div>
@@ -63,7 +63,7 @@
 
         <!-- Barang Masuk Hari Ini -->
         <div class="bg-white overflow-hidden rounded-lg shadow-lg transition-all duration-200 hover:shadow-xl hover:scale-105">
-            <div class="p-6">
+    <div class="p-6">
                 <div class="flex items-center">
                     <div class="flex-shrink-0 p-3 bg-indigo-100 rounded-full">
                         <svg class="w-8 h-8 text-indigo-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
