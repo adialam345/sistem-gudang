@@ -152,11 +152,19 @@
 
         /* Responsive table */
         @media (max-width: 640px) {
+            /* Container adjustments to match banner */
+            .table-responsive-container {
+                width: 100%;
+                margin: 0 auto;
+                padding: 0 1rem;
+            }
+
             .table-responsive {
                 display: block;
                 width: 100%;
-                overflow-x: auto;
+                overflow-x: hidden;
                 -webkit-overflow-scrolling: touch;
+                margin: 0 auto;
             }
             
             .table-responsive thead {
@@ -169,33 +177,84 @@
                 border: 1px solid #e5e7eb;
                 border-radius: 0.5rem;
                 background-color: white;
+                width: 100%;
             }
             
             .table-responsive td {
-                display: flex;
-                padding: 0.75rem !important;
+                display: flex !important;
+                padding: 0.75rem 1rem !important;
                 border-bottom: 1px solid #e5e7eb;
-                text-align: right;
                 align-items: center;
                 min-height: 48px;
+                width: 100%;
+                justify-content: space-between !important;
             }
             
             .table-responsive td::before {
                 content: attr(data-label);
                 font-weight: 600;
-                margin-right: auto;
                 text-align: left;
+                flex: 1;
+            }
+
+            .table-responsive td > span,
+            .table-responsive td > div,
+            .table-responsive td > a,
+            .table-responsive td > form,
+            .table-responsive td > input,
+            .table-responsive td > select {
+                text-align: right;
+                flex: 1;
             }
             
             .table-responsive td:last-child {
                 border-bottom: none;
             }
 
-            /* Adjust action buttons on mobile */
+            /* Special styling for action buttons */
             .table-responsive td[data-label="Aksi"] {
+                display: flex !important;
+                justify-content: space-between !important;
+                padding: 0.75rem 1rem !important;
+            }
+
+            .table-responsive td[data-label="Aksi"] > :not(:first-child) {
                 display: flex;
                 gap: 1rem;
+            }
+
+            /* Badge/status styling */
+            .table-responsive td .inline-flex {
                 justify-content: flex-end;
+            }
+
+            /* Match banner padding */
+            .px-4.sm\:px-6.py-5 {
+                padding-left: 1rem !important;
+                padding-right: 1rem !important;
+            }
+
+            /* Match banner container width */
+            .bg-white.rounded-lg.shadow-lg {
+                width: 100%;
+                margin: 0 auto;
+            }
+
+            /* Table container adjustments */
+            .overflow-x-auto {
+                padding: 0 !important;
+            }
+
+            /* Ensure consistent spacing */
+            .space-y-8 > * {
+                margin: 0 auto;
+                width: 100%;
+            }
+
+            /* Welcome banner width reference */
+            .bg-gradient-to-r {
+                width: 100%;
+                margin: 0 auto;
             }
         }
 

@@ -33,10 +33,10 @@
 
     <!-- Search & Filter -->
     <div class="bg-white rounded-lg shadow-lg">
-        <div class="px-4 sm:px-6 py-5 border-b border-gray-200">
+        <div class="px-6 py-5 border-b border-gray-200">
             <h2 class="text-xl font-semibold text-gray-900">Filter & Pencarian</h2>
         </div>
-        <div class="px-4 sm:px-6 py-5">
+        <div class="px-6 py-5">
             <form id="searchForm" action="<?= site_url('barang') ?>" method="get">
                 <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 form-responsive">
                     <div>
@@ -89,27 +89,27 @@
 
     <!-- Table -->
     <div class="bg-white rounded-lg shadow-lg">
-        <div class="px-4 sm:px-6 py-5 border-b border-gray-200">
+        <div class="px-6 py-5 border-b border-gray-200">
             <h2 class="text-xl font-semibold text-gray-900">Daftar Barang</h2>
         </div>
-        <div class="px-4 sm:px-6 py-5">
+        <div class="table-responsive-container">
             <div class="overflow-x-auto">
                 <table class="min-w-full divide-y divide-gray-200 table-responsive">
                     <thead class="bg-gray-50">
                         <tr>
-                            <th class="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Kode</th>
-                            <th class="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nama</th>
-                            <th class="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Kategori</th>
-                            <th class="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Satuan</th>
-                            <th class="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Stok</th>
-                            <th class="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Deskripsi</th>
-                            <th class="px-4 sm:px-6 py-3"></th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Kode</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nama</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Kategori</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Satuan</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Stok</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Deskripsi</th>
+                            <th class="px-6 py-3"></th>
                         </tr>
                     </thead>
                     <tbody class="bg-white divide-y divide-gray-200">
                         <?php if (empty($barang)) : ?>
                             <tr>
-                                <td colspan="7" class="px-4 sm:px-6 py-4 text-center text-sm text-gray-500">
+                                <td colspan="7" class="px-6 py-4 text-center text-sm text-gray-500">
                                     <div class="flex flex-col items-center justify-center py-8">
                                         <svg class="w-12 h-12 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
@@ -121,17 +121,17 @@
                         <?php else : ?>
                             <?php foreach ($barang as $item) : ?>
                                 <tr class="hover:bg-gray-50">
-                                    <td class="px-4 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-900" data-label="Kode"><?= esc($item['kode']) ?></td>
-                                    <td class="px-4 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-900" data-label="Nama"><?= esc($item['nama']) ?></td>
-                                    <td class="px-4 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-900" data-label="Kategori"><?= esc($item['kategori']) ?></td>
-                                    <td class="px-4 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-900" data-label="Satuan"><?= esc($item['satuan']) ?></td>
-                                    <td class="px-4 sm:px-6 py-4 whitespace-nowrap" data-label="Stok">
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900" data-label="Kode"><?= esc($item['kode']) ?></td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900" data-label="Nama"><?= esc($item['nama']) ?></td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900" data-label="Kategori"><?= esc($item['kategori']) ?></td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900" data-label="Satuan"><?= esc($item['satuan']) ?></td>
+                                    <td class="px-6 py-4 whitespace-nowrap" data-label="Stok">
                                         <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium <?= $item['stok'] > 0 ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' ?>">
                                             <?= number_format($item['stok']) ?>
                                         </span>
                                     </td>
-                                    <td class="px-4 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-900" data-label="Deskripsi"><?= esc($item['deskripsi']) ?></td>
-                                    <td class="px-4 sm:px-6 py-4 whitespace-nowrap text-right text-sm font-medium" data-label="Aksi">
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900" data-label="Deskripsi"><?= esc($item['deskripsi']) ?></td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium" data-label="Aksi">
                                         <a href="<?= site_url('barang/edit/' . $item['id']) ?>" 
                                            class="text-warehouse-600 hover:text-warehouse-900 mr-3">Edit</a>
                                         <form action="<?= site_url('barang/delete/' . $item['id']) ?>" method="post" class="inline">
@@ -149,7 +149,7 @@
                     </tbody>
                 </table>
             </div>
-            <div class="mt-4">
+            <div class="mt-4 px-6 py-3">
                 <?= $pager->links() ?>
             </div>
         </div>
