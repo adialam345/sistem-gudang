@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title><?= $title ?? 'Sistem Gudang' ?></title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script>
         tailwind.config = {
             theme: {
@@ -152,19 +152,11 @@
 
         /* Responsive table */
         @media (max-width: 640px) {
-            /* Container adjustments to match banner */
-            .table-responsive-container {
-                width: 100%;
-                margin: 0 auto;
-                padding: 0 1rem;
-            }
-
             .table-responsive {
                 display: block;
                 width: 100%;
                 overflow-x: hidden;
                 -webkit-overflow-scrolling: touch;
-                margin: 0 auto;
             }
             
             .table-responsive thead {
@@ -182,7 +174,7 @@
             
             .table-responsive td {
                 display: flex !important;
-                padding: 0.75rem 1rem !important;
+                padding: 0.75rem 1.5rem !important;
                 border-bottom: 1px solid #e5e7eb;
                 align-items: center;
                 min-height: 48px;
@@ -194,7 +186,10 @@
                 content: attr(data-label);
                 font-weight: 600;
                 text-align: left;
-                flex: 1;
+                flex: none;
+                margin-right: 1rem;
+                width: 100px;
+                min-width: 100px;
             }
 
             .table-responsive td > span,
@@ -215,46 +210,64 @@
             .table-responsive td[data-label="Aksi"] {
                 display: flex !important;
                 justify-content: space-between !important;
-                padding: 0.75rem 1rem !important;
+                padding: 0.75rem 1.5rem !important;
             }
 
             .table-responsive td[data-label="Aksi"] > :not(:first-child) {
                 display: flex;
                 gap: 1rem;
+                justify-content: flex-end;
             }
 
             /* Badge/status styling */
             .table-responsive td .inline-flex {
                 justify-content: flex-end;
+                width: auto;
             }
 
-            /* Match banner padding */
-            .px-4.sm\:px-6.py-5 {
-                padding-left: 1rem !important;
-                padding-right: 1rem !important;
-            }
-
-            /* Match banner container width */
-            .bg-white.rounded-lg.shadow-lg {
+            /* Container width adjustments */
+            .max-w-7xl {
                 width: 100%;
-                margin: 0 auto;
+                padding-left: 1.5rem;
+                padding-right: 1.5rem;
             }
 
             /* Table container adjustments */
             .overflow-x-auto {
+                margin: 0;
+                width: 100%;
+            }
+
+            /* Ensure table takes full width */
+            .table-responsive tbody {
+                display: block;
+                width: 100%;
+            }
+
+            /* Add proper padding to containers */
+            .px-6 {
+                padding-left: 1.5rem !important;
+                padding-right: 1.5rem !important;
+            }
+
+            /* Statistics cards container */
+            .grid {
                 padding: 0 !important;
             }
 
-            /* Ensure consistent spacing */
-            .space-y-8 > * {
-                margin: 0 auto;
-                width: 100%;
+            /* Activity list container */
+            .bg-white.rounded-lg.shadow-lg {
+                margin: 0;
             }
 
-            /* Welcome banner width reference */
+            /* Welcome banner adjustments */
             .bg-gradient-to-r {
-                width: 100%;
-                margin: 0 auto;
+                margin: 0;
+            }
+
+            /* Adjust spacing for better mobile view */
+            .space-y-8 > * + * {
+                margin-top: 2rem;
             }
         }
 
@@ -355,6 +368,58 @@
                 font-size: 0.875rem !important;
             }
         }
+
+        /* Logo styles */
+        .logo-container {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .logo-text {
+            font-family: 'Inter', sans-serif;
+            font-weight: 800;
+            font-size: 1.5rem;
+            background: linear-gradient(135deg, #FFB800 0%, #CC9200 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+            letter-spacing: -0.025em;
+            position: relative;
+        }
+
+        .logo-text::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(135deg, #FFB800 0%, #CC9200 100%);
+            transform: scaleX(0);
+            transform-origin: left;
+            transition: transform 0.3s ease;
+        }
+
+        .logo-container:hover .logo-text::after {
+            transform: scaleX(1);
+        }
+
+        .logo-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 2rem;
+            height: 2rem;
+            background: linear-gradient(135deg, #FFB800 0%, #CC9200 100%);
+            border-radius: 0.5rem;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease;
+        }
+
+        .logo-container:hover .logo-icon {
+            transform: rotate(5deg);
+        }
     </style>
 </head>
 <body class="bg-gray-50 min-h-screen font-sans">
@@ -364,7 +429,14 @@
             <div class="flex justify-between items-center h-full">
                 <div class="flex">
                     <div class="flex-shrink-0 flex items-center">
-                        <span class="text-2xl font-bold text-warehouse-500">SisGudang</span>
+                        <a href="<?= site_url('dashboard') ?>" class="logo-container">
+                            <div class="logo-icon">
+                                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z"/>
+                                </svg>
+                            </div>
+                            <span class="logo-text">SIGUDANG</span>
+                        </a>
                     </div>
                     <div class="hidden sm:ml-8 sm:flex sm:space-x-8">
                         <a href="<?= site_url('dashboard') ?>" 
