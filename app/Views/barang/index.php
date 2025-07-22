@@ -1,0 +1,174 @@
+<?= $this->extend('layouts/main') ?>
+
+<?= $this->section('content') ?>
+<div class="space-y-8">
+    <!-- Welcome Banner -->
+    <div class="bg-gradient-to-r from-warehouse-400 to-warehouse-500 rounded-lg shadow-lg">
+        <div class="px-6 py-8 sm:px-8">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-2xl font-bold text-white sm:text-3xl">Data Barang</h1>
+                    <p class="mt-2 text-warehouse-100">Kelola data master barang dengan mudah dan efisien</p>
+                </div>
+                <div class="hidden sm:block">
+                    <svg class="w-24 h-24 text-warehouse-100" fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                        <path d="M20 3H4c-1.103 0-2 .897-2 2v14c0 1.103.897 2 2 2h16c1.103 0 2-.897 2-2V5c0-1.103-.897-2-2-2zM4 19V5h16l.001 14H4z"/>
+                        <path d="M6 7h12v2H6zm0 4h12v2H6zm0 4h6v2H6z"/>
+                    </svg>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Action Button -->
+    <div class="flex justify-end">
+        <a href="<?= site_url('barang/create') ?>" 
+           class="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-lg text-white bg-warehouse-500 shadow-lg hover:bg-warehouse-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-warehouse-500 transition-all duration-200 hover:scale-105">
+            <svg class="-ml-1 mr-3 h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+            </svg>
+            Tambah Barang
+        </a>
+    </div>
+
+    <!-- Search & Filter -->
+    <div class="bg-white rounded-lg shadow-lg">
+        <div class="px-6 py-5 border-b border-gray-200">
+            <h2 class="text-xl font-semibold text-gray-900">Filter & Pencarian</h2>
+        </div>
+        <div class="px-6 py-5">
+            <form id="searchForm" method="get">
+                <div class="grid grid-cols-1 gap-6 sm:grid-cols-4">
+                    <div>
+                        <label for="search" class="block text-sm font-medium text-gray-700">Cari</label>
+                        <div class="mt-1">
+                            <input type="text" name="search" id="searchInput" value="<?= esc($search) ?>" 
+                                   placeholder="Kode atau nama barang" 
+                                   class="shadow-sm focus:ring-warehouse-500 focus:border-warehouse-500 block w-full sm:text-sm border-gray-300 rounded-lg" 
+                                   autocomplete="off">
+                        </div>
+                    </div>
+                    <div>
+                        <label for="kategori" class="block text-sm font-medium text-gray-700">Kategori</label>
+                        <div class="mt-1">
+                            <select name="kategori" id="kategori" 
+                                    class="shadow-sm focus:ring-warehouse-500 focus:border-warehouse-500 block w-full sm:text-sm border-gray-300 rounded-lg">
+                                <option value="">Semua Kategori</option>
+                                <?php foreach ($categories as $cat) : ?>
+                                    <option value="<?= $cat['id'] ?>" <?= $selectedCategory == $cat['id'] ? 'selected' : '' ?>>
+                                        <?= esc($cat['nama']) ?>
+                                    </option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                    </div>
+                    <div>
+                        <label for="sort" class="block text-sm font-medium text-gray-700">Urutkan</label>
+                        <div class="mt-1">
+                            <select name="sort" id="sort" 
+                                    class="shadow-sm focus:ring-warehouse-500 focus:border-warehouse-500 block w-full sm:text-sm border-gray-300 rounded-lg">
+                                <option value="">Urutkan</option>
+                                <option value="nama_asc" <?= $sort == 'nama_asc' ? 'selected' : '' ?>>Nama A-Z</option>
+                                <option value="nama_desc" <?= $sort == 'nama_desc' ? 'selected' : '' ?>>Nama Z-A</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="flex items-end">
+                        <button type="submit" 
+                                class="w-full inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-warehouse-500 hover:bg-warehouse-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-warehouse-500 transition-colors duration-200">
+                            <svg class="-ml-1 mr-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                            </svg>
+                            Cari
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Table -->
+    <div class="bg-white rounded-lg shadow-lg">
+        <div class="px-6 py-5 border-b border-gray-200">
+            <h2 class="text-xl font-semibold text-gray-900">Daftar Barang</h2>
+        </div>
+        <div class="px-6 py-5">
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Kode</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nama</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Kategori</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Satuan</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Stok</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Deskripsi</th>
+                            <th class="px-6 py-3"></th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        <?php if (empty($barang)) : ?>
+                            <tr>
+                                <td colspan="7" class="px-6 py-4 text-center text-sm text-gray-500">
+                                    <div class="flex flex-col items-center justify-center py-8">
+                                        <svg class="w-12 h-12 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+                                        </svg>
+                                        <p class="mt-4 text-gray-500">Belum ada data</p>
+                                    </div>
+                                </td>
+                            </tr>
+                        <?php else : ?>
+                            <?php foreach ($barang as $item) : ?>
+                                <tr class="hover:bg-gray-50">
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"><?= esc($item['kode']) ?></td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"><?= esc($item['nama']) ?></td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"><?= esc($item['kategori']) ?></td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"><?= esc($item['satuan']) ?></td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium <?= $item['stok'] > 0 ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' ?>">
+                                            <?= number_format($item['stok']) ?>
+                                        </span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"><?= esc($item['deskripsi']) ?></td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                        <a href="<?= site_url('barang/edit/' . $item['id']) ?>" 
+                                           class="text-warehouse-600 hover:text-warehouse-900 mr-3">Edit</a>
+                                        <form action="<?= site_url('barang/delete/' . $item['id']) ?>" method="post" class="inline">
+                                            <?= csrf_field() ?>
+                                            <button type="submit" 
+                                                    class="text-red-600 hover:text-red-900" 
+                                                    onclick="return confirm('Yakin ingin menghapus?')">
+                                                Hapus
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            <?php endforeach; ?>
+                        <?php endif; ?>
+                    </tbody>
+                </table>
+            </div>
+            <div class="mt-4">
+                <?= $pager->links() ?>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Live search: submit form on input (only for search field)
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('searchInput');
+    const searchForm = document.getElementById('searchForm');
+    let timeout = null;
+    searchInput.addEventListener('input', function() {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => {
+            searchForm.submit();
+        }, 400); // debounce
+    });
+});
+</script>
+
+<?= $this->endSection() ?> 
