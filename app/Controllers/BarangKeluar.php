@@ -2,23 +2,55 @@
 
 namespace App\Controllers;
 
+use App\Helpers\ExportHelper;
 use App\Models\BarangModel;
 use App\Models\BarangMasukModel;
 use App\Models\BarangKeluarModel;
 
 class BarangKeluar extends BaseController
 {
+    protected $barangKeluarModel;
     protected $barangModel;
     protected $barangMasukModel;
-    protected $barangKeluarModel;
     protected $db;
 
     public function __construct()
     {
+        $this->barangKeluarModel = new BarangKeluarModel();
         $this->barangModel = new BarangModel();
         $this->barangMasukModel = new BarangMasukModel();
-        $this->barangKeluarModel = new BarangKeluarModel();
         $this->db = \Config\Database::connect();
+    }
+
+    private function getCurrentStock($barangId)
+    {
+        $totalMasuk = $this->barangMasukModel->where('barang_id', $barangId)->selectSum('jumlah')->get()->getRow()->jumlah ?? 0;
+        $totalKeluar = $this->barangKeluarModel->where('barang_id', $barangId)->selectSum('jumlah')->get()->getRow()->jumlah ?? 0;
+        return $totalMasuk - $totalKeluar;
+    }
+
+    private function generateTransactionNumber()
+    {
+        $tanggal = date('Y-m-d');
+        $prefix = 'BK';
+        
+        // Get the last transaction number for today
+        $lastTransaksi = $this->barangKeluarModel
+            ->where('DATE(tanggal)', $tanggal)
+            ->orderBy('no_transaksi', 'DESC')
+            ->first();
+
+        $counter = 1;
+        if ($lastTransaksi) {
+            // Extract counter from last transaction number (format: BK/YYYYMMDD/XXXX)
+            $parts = explode('/', $lastTransaksi['no_transaksi']);
+            if (count($parts) === 3) {
+                $counter = (int)$parts[2] + 1;
+            }
+        }
+
+        // Generate new transaction number
+        return sprintf("%s/%s/%04d", $prefix, date('Ymd'), $counter);
     }
 
     public function index()
@@ -61,10 +93,7 @@ class BarangKeluar extends BaseController
         // Get list of barang with current stock info
         $barangList = $this->barangModel->findAll();
         foreach ($barangList as &$item) {
-            // Get current stock
-            $masuk = $this->barangMasukModel->selectSum('jumlah')->where('barang_id', $item['id'])->first();
-            $keluar = $this->db->table('barang_keluar')->selectSum('jumlah')->where('barang_id', $item['id'])->get()->getRow();
-            $item['stok'] = ($masuk['jumlah'] ?? 0) - ($keluar->jumlah ?? 0);
+            $item['stok'] = $this->getCurrentStock($item['id']);
         }
 
         $data = [
@@ -78,6 +107,7 @@ class BarangKeluar extends BaseController
 
     public function store()
     {
+        // Validate required fields
         $rules = [
             'tanggal' => [
                 'rules' => 'required',
@@ -98,68 +128,67 @@ class BarangKeluar extends BaseController
                     'numeric' => 'Jumlah harus berupa angka',
                     'greater_than' => 'Jumlah harus lebih dari 0'
                 ]
+            ],
+            'tujuan' => [
+                'rules' => 'required',
+                'errors' => [
+                    'required' => 'Tujuan harus diisi'
+                ]
             ]
         ];
 
         if (!$this->validate($rules)) {
-            return redirect()->back()->withInput()->with('validation', $this->validator);
+            return redirect()->back()
+                           ->withInput()
+                           ->with('validation', $this->validator)
+                           ->with('error', 'Validasi gagal: ' . implode(', ', $this->validator->getErrors()));
         }
 
-        $barang = $this->barangModel->find($this->request->getPost('barang_id'));
-        if (!$barang) {
-            return redirect()->back()->withInput()->with('error', 'Barang tidak ditemukan');
-        }
-
-        // Hitung stok saat ini
-        $masuk = $this->barangMasukModel->selectSum('jumlah')->where('barang_id', $barang['id'])->first();
-        $keluar = $this->db->table('barang_keluar')->selectSum('jumlah')->where('barang_id', $barang['id'])->get()->getRow();
-        $stokSaatIni = ($masuk['jumlah'] ?? 0) - ($keluar->jumlah ?? 0);
-
-        $jumlah = $this->request->getPost('jumlah');
-        if ($jumlah > $stokSaatIni) {
-            return redirect()->back()->withInput()->with('error', 'Stok tidak mencukupi');
-        }
-
-        // Generate nomor transaksi: BK/YYYYMMDD/XXXX
-        $tanggal = $this->request->getPost('tanggal');
-        $lastTransaksi = $this->barangKeluarModel
-            ->where('DATE(tanggal)', $tanggal)
-            ->orderBy('no_transaksi', 'DESC')
-            ->first();
-
-        $counter = 1;
-        if ($lastTransaksi) {
-            // Extract counter from last transaction number
-            $parts = explode('/', $lastTransaksi['no_transaksi']);
-            $counter = intval(end($parts)) + 1;
-        }
-
-        $noTransaksi = sprintf("BK/%s/%04d", date('Ymd', strtotime($tanggal)), $counter);
-
-        $this->db->transStart();
-
-        try {
             $data = [
-                'tanggal' => $tanggal,
-                'no_transaksi' => $noTransaksi,
-                'barang_id' => $barang['id'],
-                'kode_barang' => $barang['kode'],
-                'nama_barang' => $barang['nama'],
-                'jumlah' => $jumlah,
-                'satuan' => $barang['satuan'],
+            'tanggal' => $this->request->getPost('tanggal'),
+            'no_transaksi' => $this->generateTransactionNumber(),
+            'barang_id' => $this->request->getPost('barang_id'),
+            'kode_barang' => $this->request->getPost('kode_barang'),
+            'nama_barang' => $this->request->getPost('nama_barang'),
+            'jumlah' => $this->request->getPost('jumlah'),
+            'satuan' => $this->request->getPost('satuan'),
                 'tujuan' => $this->request->getPost('tujuan'),
                 'keterangan' => $this->request->getPost('keterangan')
             ];
 
-            if (!$this->barangKeluarModel->insert($data)) {
-                throw new \Exception('Gagal menambahkan barang keluar');
+        $db = \Config\Database::connect();
+        $db->transStart();
+
+        try {
+            // Check if barang exists
+            $barang = $this->barangModel->find($data['barang_id']);
+            if (!$barang) {
+                throw new \Exception('Barang tidak ditemukan');
             }
 
-            $this->db->transCommit();
+            // Check if stock is sufficient
+            $currentStock = $this->getCurrentStock($data['barang_id']);
+            if ($currentStock < $data['jumlah']) {
+                throw new \Exception('Stok tidak mencukupi. Stok tersedia: ' . $currentStock);
+            }
+
+            // Insert barang keluar record
+            if (!$this->barangKeluarModel->insert($data)) {
+                throw new \Exception('Gagal menyimpan data: ' . implode(', ', $this->barangKeluarModel->errors()));
+            }
+
+            $db->transComplete();
+
+            if ($db->transStatus() === false) {
+                throw new \Exception('Transaksi database gagal');
+            }
+
             return redirect()->to('/barang-keluar')->with('success', 'Barang keluar berhasil ditambahkan');
         } catch (\Exception $e) {
-            $this->db->transRollback();
-            return redirect()->back()->withInput()->with('error', $e->getMessage());
+            $db->transRollback();
+            return redirect()->back()
+                           ->withInput()
+                           ->with('error', 'Gagal menambah barang keluar: ' . $e->getMessage());
         }
     }
 
@@ -173,15 +202,11 @@ class BarangKeluar extends BaseController
         // Get list of barang with current stock info
         $barangList = $this->barangModel->findAll();
         foreach ($barangList as &$item) {
-            // Get current stock
-            $masuk = $this->barangMasukModel->selectSum('jumlah')->where('barang_id', $item['id'])->first();
-            $keluar = $this->db->table('barang_keluar')
-                              ->selectSum('jumlah')
-                              ->where('barang_id', $item['id'])
-                              ->where('id !=', $id) // Exclude current transaction
-                              ->get()
-                              ->getRow();
-            $item['stok'] = ($masuk['jumlah'] ?? 0) - ($keluar->jumlah ?? 0);
+            // Add back current transaction amount to get available stock
+            $item['stok'] = $this->getCurrentStock($item['id']);
+            if ($item['id'] == $barangKeluar['barang_id']) {
+                $item['stok'] += $barangKeluar['jumlah'];
+            }
         }
 
         $data = [
@@ -196,81 +221,49 @@ class BarangKeluar extends BaseController
 
     public function update($id)
     {
-        $barangKeluar = $this->barangKeluarModel->find($id);
-        if (!$barangKeluar) {
-            return redirect()->to('/barang-keluar')->with('error', 'Data tidak ditemukan');
+        $oldData = $this->barangKeluarModel->find($id);
+        if (!$oldData) {
+            return redirect()->back()->with('error', 'Data tidak ditemukan');
         }
 
-        $rules = [
-            'tanggal' => [
-                'rules' => 'required',
-                'errors' => [
-                    'required' => 'Tanggal harus diisi'
-                ]
-            ],
-            'barang_id' => [
-                'rules' => 'required',
-                'errors' => [
-                    'required' => 'Barang harus dipilih'
-                ]
-            ],
-            'jumlah' => [
-                'rules' => 'required|numeric|greater_than[0]',
-                'errors' => [
-                    'required' => 'Jumlah harus diisi',
-                    'numeric' => 'Jumlah harus berupa angka',
-                    'greater_than' => 'Jumlah harus lebih dari 0'
-                ]
-            ]
-        ];
-
-        if (!$this->validate($rules)) {
-            return redirect()->back()->withInput()->with('validation', $this->validator);
-        }
-
-        $barang = $this->barangModel->find($this->request->getPost('barang_id'));
-        if (!$barang) {
-            return redirect()->back()->withInput()->with('error', 'Barang tidak ditemukan');
-        }
-
-        // Hitung stok saat ini (tidak termasuk transaksi yang sedang diedit)
-        $masuk = $this->barangMasukModel->selectSum('jumlah')->where('barang_id', $barang['id'])->first();
-        $keluar = $this->db->table('barang_keluar')
-                          ->selectSum('jumlah')
-                          ->where('barang_id', $barang['id'])
-                          ->where('id !=', $id)
-                          ->get()
-                          ->getRow();
-        $stokSaatIni = ($masuk['jumlah'] ?? 0) - ($keluar->jumlah ?? 0);
-
-        $jumlah = $this->request->getPost('jumlah');
-        if ($jumlah > $stokSaatIni) {
-            return redirect()->back()->withInput()->with('error', 'Stok tidak mencukupi');
-        }
-
-        $this->db->transStart();
-
-        try {
             $data = [
                 'tanggal' => $this->request->getPost('tanggal'),
-                'barang_id' => $barang['id'],
-                'kode_barang' => $barang['kode'],
-                'nama_barang' => $barang['nama'],
-                'jumlah' => $jumlah,
-                'satuan' => $barang['satuan'],
+            'barang_id' => $this->request->getPost('barang_id'),
+            'kode_barang' => $this->request->getPost('kode_barang'),
+            'nama_barang' => $this->request->getPost('nama_barang'),
+            'jumlah' => $this->request->getPost('jumlah'),
+            'satuan' => $this->request->getPost('satuan'),
                 'tujuan' => $this->request->getPost('tujuan'),
                 'keterangan' => $this->request->getPost('keterangan')
             ];
 
-            if (!$this->barangKeluarModel->update($id, $data)) {
-                throw new \Exception('Gagal mengupdate barang keluar');
+        $db = \Config\Database::connect();
+        $db->transStart();
+
+        try {
+            // Check if stock is sufficient
+            $currentStock = $this->getCurrentStock($data['barang_id']);
+            if ($data['barang_id'] == $oldData['barang_id']) {
+                $currentStock += $oldData['jumlah']; // Add back the old amount
+            }
+            
+            if ($currentStock < $data['jumlah']) {
+                return redirect()->back()->with('error', 'Stok tidak mencukupi. Stok tersedia: ' . $currentStock);
             }
 
-            $this->db->transCommit();
+            // Update barang keluar record
+            $this->barangKeluarModel->update($id, $data);
+
+            $db->transComplete();
+
+            if ($db->transStatus() === false) {
+                return redirect()->back()->with('error', 'Gagal mengupdate barang keluar');
+            }
+
             return redirect()->to('/barang-keluar')->with('success', 'Barang keluar berhasil diupdate');
         } catch (\Exception $e) {
-            $this->db->transRollback();
-            return redirect()->back()->withInput()->with('error', $e->getMessage());
+            $db->transRollback();
+            return redirect()->back()->with('error', 'Gagal mengupdate barang keluar: ' . $e->getMessage());
         }
     }
 
@@ -284,13 +277,7 @@ class BarangKeluar extends BaseController
         $this->db->transStart();
 
         try {
-            // Kembalikan stok barang
-            $barang = $this->barangModel->find($barangKeluar['barang_id']);
-            $this->barangModel->update($barang['id'], [
-                'stok' => $barang['stok'] + $barangKeluar['jumlah']
-            ]);
-
-            // Hapus barang keluar
+            // Delete barang keluar record
             $this->barangKeluarModel->delete($id);
 
             $this->db->transComplete();
@@ -306,20 +293,77 @@ class BarangKeluar extends BaseController
         }
     }
 
-    private function generateNoTransaksi()
+    public function exportPdf()
     {
-        $tanggal = date('Ymd');
-        $lastNo = $this->barangKeluarModel->where('DATE(tanggal)', date('Y-m-d'))
-                                         ->orderBy('no_transaksi', 'DESC')
-                                         ->first();
+        $search = $this->request->getGet('search');
+        $tanggal_awal = $this->request->getGet('tanggal_awal');
+        $tanggal_akhir = $this->request->getGet('tanggal_akhir');
 
-        if ($lastNo) {
-            $lastNo = substr($lastNo['no_transaksi'], -4);
-            $nextNo = str_pad($lastNo + 1, 4, '0', STR_PAD_LEFT);
-        } else {
-            $nextNo = '0001';
+        $query = $this->barangKeluarModel;
+
+        if ($search) {
+            $query->groupStart()
+                  ->like('no_transaksi', $search)
+                  ->orLike('kode_barang', $search)
+                  ->orLike('nama_barang', $search)
+                  ->groupEnd();
         }
 
-        return 'BK' . $tanggal . $nextNo;
+        if ($tanggal_awal && $tanggal_akhir) {
+            $query->where('DATE(tanggal) >=', $tanggal_awal)
+                  ->where('DATE(tanggal) <=', $tanggal_akhir);
+        }
+
+        $barangKeluar = $query->findAll();
+        
+        $html = view('barang_keluar/export_pdf', [
+            'barangKeluar' => $barangKeluar,
+            'tanggal' => date('d/m/Y'),
+            'tanggal_awal' => $tanggal_awal,
+            'tanggal_akhir' => $tanggal_akhir
+        ]);
+
+        ExportHelper::exportToPdf($html, 'barang_keluar_' . date('Ymd'));
+    }
+
+    public function exportExcel()
+    {
+        $search = $this->request->getGet('search');
+        $tanggal_awal = $this->request->getGet('tanggal_awal');
+        $tanggal_akhir = $this->request->getGet('tanggal_akhir');
+
+        $query = $this->barangKeluarModel;
+
+        if ($search) {
+            $query->groupStart()
+                  ->like('no_transaksi', $search)
+                  ->orLike('kode_barang', $search)
+                  ->orLike('nama_barang', $search)
+                  ->groupEnd();
+        }
+
+        if ($tanggal_awal && $tanggal_akhir) {
+            $query->where('DATE(tanggal) >=', $tanggal_awal)
+                  ->where('DATE(tanggal) <=', $tanggal_akhir);
+        }
+
+        $barangKeluar = $query->findAll();
+        
+        $headers = ['Tanggal', 'No Transaksi', 'Kode Barang', 'Nama Barang', 'Jumlah', 'Satuan', 'Penerima', 'Keterangan'];
+        
+        $data = array_map(function($item) {
+            return [
+                date('d/m/Y', strtotime($item['tanggal'])),
+                $item['no_transaksi'],
+                $item['kode_barang'],
+                $item['nama_barang'],
+                $item['jumlah'],
+                $item['satuan'],
+                $item['penerima'],
+                $item['keterangan']
+            ];
+        }, $barangKeluar);
+
+        ExportHelper::exportToExcel($data, $headers, 'barang_keluar_' . date('Ymd'));
     }
 } 

@@ -2,20 +2,45 @@
 
 namespace App\Controllers;
 
+use App\Helpers\ExportHelper;
 use App\Models\BarangModel;
 use App\Models\BarangMasukModel;
 
 class BarangMasuk extends BaseController
 {
-    protected $barangModel;
     protected $barangMasukModel;
+    protected $barangModel;
     protected $db;
 
     public function __construct()
     {
-        $this->barangModel = new BarangModel();
         $this->barangMasukModel = new BarangMasukModel();
+        $this->barangModel = new BarangModel();
         $this->db = \Config\Database::connect();
+    }
+
+    private function generateTransactionNumber()
+    {
+        $tanggal = date('Y-m-d');
+        $prefix = 'BM';
+        
+        // Get the last transaction number for today
+        $lastTransaksi = $this->barangMasukModel
+            ->where('DATE(tanggal)', $tanggal)
+            ->orderBy('no_transaksi', 'DESC')
+            ->first();
+
+        $counter = 1;
+        if ($lastTransaksi) {
+            // Extract counter from last transaction number (format: BM/YYYYMMDD/XXXX)
+            $parts = explode('/', $lastTransaksi['no_transaksi']);
+            if (count($parts) === 3) {
+                $counter = (int)$parts[2] + 1;
+            }
+        }
+
+        // Generate new transaction number
+        return sprintf("%s/%s/%04d", $prefix, date('Ymd'), $counter);
     }
 
     public function index()
@@ -283,5 +308,79 @@ class BarangMasuk extends BaseController
             $this->db->transRollback();
             return redirect()->to('/barang-masuk')->with('error', $e->getMessage());
         }
+    }
+
+    public function exportPdf()
+    {
+        $search = $this->request->getGet('search');
+        $tanggal_awal = $this->request->getGet('tanggal_awal');
+        $tanggal_akhir = $this->request->getGet('tanggal_akhir');
+
+        $query = $this->barangMasukModel;
+
+        if ($search) {
+            $query->groupStart()
+                  ->like('no_transaksi', $search)
+                  ->orLike('kode_barang', $search)
+                  ->orLike('nama_barang', $search)
+                  ->groupEnd();
+        }
+
+        if ($tanggal_awal && $tanggal_akhir) {
+            $query->where('DATE(tanggal) >=', $tanggal_awal)
+                  ->where('DATE(tanggal) <=', $tanggal_akhir);
+        }
+
+        $barangMasuk = $query->findAll();
+        
+        $html = view('barang_masuk/export_pdf', [
+            'barangMasuk' => $barangMasuk,
+            'tanggal' => date('d/m/Y'),
+            'tanggal_awal' => $tanggal_awal,
+            'tanggal_akhir' => $tanggal_akhir
+        ]);
+
+        ExportHelper::exportToPdf($html, 'barang_masuk_' . date('Ymd'));
+    }
+
+    public function exportExcel()
+    {
+        $search = $this->request->getGet('search');
+        $tanggal_awal = $this->request->getGet('tanggal_awal');
+        $tanggal_akhir = $this->request->getGet('tanggal_akhir');
+
+        $query = $this->barangMasukModel;
+
+        if ($search) {
+            $query->groupStart()
+                  ->like('no_transaksi', $search)
+                  ->orLike('kode_barang', $search)
+                  ->orLike('nama_barang', $search)
+                  ->groupEnd();
+        }
+
+        if ($tanggal_awal && $tanggal_akhir) {
+            $query->where('DATE(tanggal) >=', $tanggal_awal)
+                  ->where('DATE(tanggal) <=', $tanggal_akhir);
+        }
+
+        $barangMasuk = $query->findAll();
+        
+        $headers = ['Tanggal', 'No Transaksi', 'Kode Barang', 'Nama Barang', 'Jumlah', 'Satuan', 'Supplier', 'Keterangan'];
+        
+        $data = array_map(function($item) {
+            return [
+                date('d/m/Y', strtotime($item['tanggal'])),
+                $item['no_transaksi'],
+                $item['kode_barang'],
+                $item['nama_barang'],
+                $item['jumlah'],
+                $item['satuan'],
+                $item['supplier'],
+                $item['keterangan']
+            ];
+        }, $barangMasuk);
+
+        ExportHelper::exportToExcel($data, $headers, 'barang_masuk_' . date('Ymd'));
     }
 } 

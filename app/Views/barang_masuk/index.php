@@ -78,8 +78,26 @@
 
     <!-- Table -->
     <div class="bg-white rounded-lg shadow-lg">
-        <div class="px-4 sm:px-6 py-5 border-b border-gray-200">
+        <div class="px-6 py-5 border-b border-gray-200">
+            <div class="flex items-center justify-between">
             <h2 class="text-xl font-semibold text-gray-900">Daftar Barang Masuk</h2>
+                <div class="flex space-x-2">
+                    <a href="<?= site_url('barang-masuk/export-excel') . '?' . http_build_query($_GET) ?>" 
+                       class="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                        <svg class="-ml-1 mr-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                        Excel
+                    </a>
+                    <a href="<?= site_url('barang-masuk/export-pdf') . '?' . http_build_query($_GET) ?>" 
+                       class="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
+                        <svg class="-ml-1 mr-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                        PDF
+                    </a>
+                </div>
+            </div>
         </div>
         <div class="px-4 sm:px-6 py-5">
             <div class="overflow-x-auto">

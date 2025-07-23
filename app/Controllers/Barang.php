@@ -2,6 +2,7 @@
 
 namespace App\Controllers;
 
+use App\Helpers\ExportHelper;
 use App\Models\BarangModel;
 use App\Models\BarangMasukModel;
 
@@ -235,5 +236,45 @@ class Barang extends BaseController
         }
 
         return redirect()->to('/barang')->with('success', 'Barang berhasil dihapus');
+    }
+
+    public function exportPdf()
+    {
+        $db = \Config\Database::connect();
+        $builder = $db->table('barang b');
+        $builder->select('b.*, COALESCE(k.nama, "-") as kategori')
+                ->join('kategori k', 'k.id = b.kategori_id', 'left');
+        $barang = $builder->get()->getResultArray();
+        
+        $html = view('barang/export_pdf', [
+            'barang' => $barang,
+            'tanggal' => date('d/m/Y')
+        ]);
+
+        ExportHelper::exportToPdf($html, 'daftar_barang_' . date('Ymd'));
+    }
+
+    public function exportExcel()
+    {
+        $db = \Config\Database::connect();
+        $builder = $db->table('barang b');
+        $builder->select('b.*, COALESCE(k.nama, "-") as kategori')
+                ->join('kategori k', 'k.id = b.kategori_id', 'left');
+        $barang = $builder->get()->getResultArray();
+        
+        $headers = ['Kode', 'Nama', 'Kategori', 'Satuan', 'Stok', 'Deskripsi'];
+        
+        $data = array_map(function($item) {
+            return [
+                $item['kode'],
+                $item['nama'],
+                $item['kategori'],
+                $item['satuan'],
+                $item['stok'],
+                $item['deskripsi']
+            ];
+        }, $barang);
+
+        ExportHelper::exportToExcel($data, $headers, 'daftar_barang_' . date('Ymd'));
     }
 } 

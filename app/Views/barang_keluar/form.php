@@ -68,6 +68,7 @@
                                 ?>
                                     <option value="<?= $item['id'] ?>" 
                                             data-kode="<?= esc($item['kode']) ?>"
+                                            data-nama="<?= esc($item['nama']) ?>"
                                             data-satuan="<?= esc($item['satuan']) ?>"
                                             data-stok="<?= $item['stok'] ?>"
                                             <?= (isset($barangKeluar) && $barangKeluar['barang_id'] == $item['id']) || old('barang_id') == $item['id'] ? 'selected' : '' ?>>
@@ -110,7 +111,8 @@
                         <div class="mt-1">
                             <input type="text" name="tujuan" id="tujuan" 
                                    value="<?= isset($barangKeluar) ? esc($barangKeluar['tujuan']) : old('tujuan') ?>"
-                                   class="shadow-sm focus:ring-warehouse-500 focus:border-warehouse-500 block w-full sm:text-sm border-gray-300 rounded-md">
+                                   class="shadow-sm focus:ring-warehouse-500 focus:border-warehouse-500 block w-full sm:text-sm border-gray-300 rounded-md"
+                                   required>
                         </div>
                         <?php if (isset($validation) && $validation->hasError('tujuan')) : ?>
                             <p class="mt-2 text-sm text-red-600"><?= $validation->getError('tujuan') ?></p>
@@ -127,6 +129,11 @@
                             <p class="mt-2 text-sm text-red-600"><?= $validation->getError('keterangan') ?></p>
                         <?php endif; ?>
                     </div>
+
+                    <!-- Hidden fields for barang data -->
+                    <input type="hidden" name="kode_barang" id="kode_barang" value="<?= isset($barangKeluar) ? $barangKeluar['kode_barang'] : old('kode_barang') ?>">
+                    <input type="hidden" name="nama_barang" id="nama_barang" value="<?= isset($barangKeluar) ? $barangKeluar['nama_barang'] : old('nama_barang') ?>">
+                    <input type="hidden" name="satuan" id="satuan" value="<?= isset($barangKeluar) ? $barangKeluar['satuan'] : old('satuan') ?>">
                 </div>
 
                 <div class="flex justify-end space-x-3">
@@ -150,18 +157,32 @@ document.addEventListener('DOMContentLoaded', function() {
     const jumlahInput = document.getElementById('jumlah');
     const satuanAddon = document.getElementById('satuan-addon');
     const stokInfo = document.getElementById('stok-info');
+    const kodeBarangInput = document.getElementById('kode_barang');
+    const namaBarangInput = document.getElementById('nama_barang');
+    const satuanInput = document.getElementById('satuan');
 
     function updateSatuanAndStok() {
         const selectedOption = barangSelect.options[barangSelect.selectedIndex];
-        satuanAddon.textContent = selectedOption.dataset.satuan || '';
+        const satuan = selectedOption.dataset.satuan || '';
+        satuanAddon.textContent = satuan;
 
         if (selectedOption.value) {
             const stok = parseInt(selectedOption.dataset.stok);
-            stokInfo.textContent = `Stok tersedia: ${stok.toLocaleString()} ${selectedOption.dataset.satuan}`;
+            stokInfo.textContent = `Stok tersedia: ${stok.toLocaleString()} ${satuan}`;
             jumlahInput.max = stok;
+
+            // Update hidden fields
+            kodeBarangInput.value = selectedOption.dataset.kode || '';
+            namaBarangInput.value = selectedOption.dataset.nama || '';
+            satuanInput.value = satuan;
         } else {
             stokInfo.textContent = '';
             jumlahInput.removeAttribute('max');
+
+            // Clear hidden fields
+            kodeBarangInput.value = '';
+            namaBarangInput.value = '';
+            satuanInput.value = '';
         }
     }
 
