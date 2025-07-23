@@ -157,8 +157,8 @@
                                        value="<?= $tanggal_akhir ?>"
                                        class="shadow-sm focus:ring-warehouse-500 focus:border-warehouse-500 block w-full sm:text-sm border-gray-300 rounded-md">
                             </div>
-                        </div>
-                    </div>
+            </div>
+        </div>
 
                     <div class="mt-4 flex justify-end">
                         <a href="<?= site_url('dashboard') ?>" 
@@ -186,41 +186,41 @@
                                             <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nama Barang</th>
                                             <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Jumlah</th>
                                             <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tipe</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody class="bg-white divide-y divide-gray-200">
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
                                         <?php foreach ($aktivitasTerbaru as $aktivitas): ?>
                                         <tr>
                                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                                <?= date('d/m/Y', strtotime($aktivitas['tanggal'])) ?>
-                                            </td>
+                                        <?= date('d/m/Y', strtotime($aktivitas['tanggal'])) ?>
+                                    </td>
                                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                                 <?= $aktivitas['no_transaksi'] ?>
-                                            </td>
+                                    </td>
                                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                                 <?= $aktivitas['kode_barang'] ?>
-                                            </td>
+                                    </td>
                                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                                 <?= $aktivitas['nama_barang'] ?>
-                                            </td>
+                                    </td>
                                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                                 <?= number_format($aktivitas['jumlah']) ?> <?= $aktivitas['satuan'] ?>
-                                            </td>
+                                    </td>
                                             <td class="px-6 py-4 whitespace-nowrap text-sm">
                                                 <?php if ($aktivitas['tipe'] == 'masuk'): ?>
                                                     <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                                                        Masuk
-                                                    </span>
+                                                Masuk
+                                            </span>
                                                 <?php else: ?>
                                                     <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
-                                                        Keluar
-                                                    </span>
-                                                <?php endif; ?>
-                                            </td>
-                                        </tr>
-                                        <?php endforeach; ?>
-                                    </tbody>
-                                </table>
+                                                Keluar
+                                            </span>
+                                        <?php endif; ?>
+                                    </td>
+                                </tr>
+                            <?php endforeach; ?>
+                    </tbody>
+                </table>
                             </div>
                         </div>
                     </div>
