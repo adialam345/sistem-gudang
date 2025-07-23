@@ -2,243 +2,128 @@
 
 namespace App\Controllers;
 
-use App\Models\BarangMasukModel;
-use App\Models\BarangKeluarModel;
-use App\Models\BarangModel;
+use App\Helpers\ExportHelper;
 
 class Dashboard extends BaseController
 {
     public function index()
     {
-        $time_filter = $this->request->getGet('time_filter');
-        
-        $barangMasukModel = new BarangMasukModel();
-        $barangKeluarModel = new BarangKeluarModel();
-        $barangModel = new BarangModel();
-        
-        // Calculate statistics
-        $totalSKU = $barangModel->countAllResults();
+        $search = $this->request->getGet('search');
+        $tanggal_awal = $this->request->getGet('tanggal_awal');
+        $tanggal_akhir = $this->request->getGet('tanggal_akhir');
 
-        // Calculate real stock based on transactions
+        $barangModel = new \App\Models\BarangModel();
+        $barangMasukModel = new \App\Models\BarangMasukModel();
+        $barangKeluarModel = new \App\Models\BarangKeluarModel();
+
+        // Calculate total stock from transactions
         $totalMasuk = $barangMasukModel->selectSum('jumlah')->get()->getRow()->jumlah ?? 0;
         $totalKeluar = $barangKeluarModel->selectSum('jumlah')->get()->getRow()->jumlah ?? 0;
         $totalStok = $totalMasuk - $totalKeluar;
-        
-        // Calculate today's transactions
-        $today = date('Y-m-d');
-        $masukHariIni = $barangMasukModel->where('DATE(tanggal)', $today)->selectSum('jumlah')->get()->getRow()->jumlah ?? 0;
-        $keluarHariIni = $barangKeluarModel->where('DATE(tanggal)', $today)->selectSum('jumlah')->get()->getRow()->jumlah ?? 0;
-        
-        // Get filtered activities
-        if ($time_filter && $time_filter !== 'all') {
-            $days = (int)$time_filter;
-            $startDate = date('Y-m-d', strtotime("-$days days"));
-            $endDate = date('Y-m-d');
-            
-            $barangMasukModel->where('tanggal >=', $startDate)
-                            ->where('tanggal <=', $endDate);
-            
-            $barangKeluarModel->where('tanggal >=', $startDate)
-                             ->where('tanggal <=', $endDate);
-        }
-        
-        $aktivitasTerbaru = array_merge(
-            array_map(function($item) {
-                return [
-                    'tanggal' => $item['tanggal'],
-                    'no_transaksi' => $item['no_transaksi'],
-                    'kode_barang' => $item['kode_barang'],
-                    'nama_barang' => $item['nama_barang'],
-                    'jumlah' => $item['jumlah'],
-                    'satuan' => $item['satuan'],
-                    'tipe' => 'masuk'
-                ];
-            }, $barangMasukModel->findAll()),
-            array_map(function($item) {
-                return [
-                    'tanggal' => $item['tanggal'],
-                    'no_transaksi' => $item['no_transaksi'],
-                    'kode_barang' => $item['kode_barang'],
-                    'nama_barang' => $item['nama_barang'],
-                    'jumlah' => $item['jumlah'],
-                    'satuan' => $item['satuan'],
-                    'tipe' => 'keluar'
-                ];
-            }, $barangKeluarModel->findAll())
-        );
-        
-        usort($aktivitasTerbaru, function($a, $b) {
-            return strtotime($b['tanggal']) - strtotime($a['tanggal']);
-        });
-        
+
         $data = [
-            'title' => 'Dashboard',
-            'totalSKU' => $totalSKU,
+            'totalSKU' => $barangModel->countAllResults(),
             'totalStok' => $totalStok,
-            'masukHariIni' => $masukHariIni,
-            'keluarHariIni' => $keluarHariIni,
-            'aktivitasTerbaru' => $aktivitasTerbaru,
-            'time_filter' => $time_filter,
-            'search' => $this->request->getGet('search'),
-            'tanggal_awal' => $this->request->getGet('tanggal_awal'),
-            'tanggal_akhir' => $this->request->getGet('tanggal_akhir')
+            'masukHariIni' => $barangMasukModel->where('DATE(tanggal)', date('Y-m-d'))->selectSum('jumlah')->get()->getRow()->jumlah ?? 0,
+            'keluarHariIni' => $barangKeluarModel->where('DATE(tanggal)', date('Y-m-d'))->selectSum('jumlah')->get()->getRow()->jumlah ?? 0,
+            'aktivitasTerbaru' => $this->getAktivitasTerbaru($search, $tanggal_awal, $tanggal_akhir),
+            'search' => $search,
+            'tanggal_awal' => $tanggal_awal,
+            'tanggal_akhir' => $tanggal_akhir
         ];
-        
+
         return view('dashboard/index', $data);
     }
 
-    public function exportPdf()
+    private function getAktivitasTerbaru($search = null, $tanggal_awal = null, $tanggal_akhir = null)
     {
-        $time_filter = $this->request->getGet('time_filter');
+        $db = \Config\Database::connect();
+
+        // Base queries
+        $barangMasukQuery = $db->table('barang_masuk')
+            ->select("'masuk' as tipe, tanggal, no_transaksi, kode_barang, nama_barang, jumlah, satuan");
         
-        $barangMasukModel = new BarangMasukModel();
-        $barangKeluarModel = new BarangKeluarModel();
-        
-        if ($time_filter && $time_filter !== 'all') {
-            $days = (int)$time_filter;
-            $startDate = date('Y-m-d', strtotime("-$days days"));
-            $endDate = date('Y-m-d');
-            
-            $barangMasukModel->where('tanggal >=', $startDate)
-                            ->where('tanggal <=', $endDate);
-            
-            $barangKeluarModel->where('tanggal >=', $startDate)
-                             ->where('tanggal <=', $endDate);
+        $barangKeluarQuery = $db->table('barang_keluar')
+            ->select("'keluar' as tipe, tanggal, no_transaksi, kode_barang, nama_barang, jumlah, satuan");
+
+        // Apply search filter if provided
+        if ($search) {
+            $barangMasukQuery->groupStart()
+                ->like('kode_barang', $search)
+                ->orLike('nama_barang', $search)
+                ->orLike('no_transaksi', $search)
+                ->groupEnd();
+
+            $barangKeluarQuery->groupStart()
+                ->like('kode_barang', $search)
+                ->orLike('nama_barang', $search)
+                ->orLike('no_transaksi', $search)
+                ->groupEnd();
         }
-        
-        $aktivitas = array_merge(
-            array_map(function($item) {
-                return [
-                    'tanggal' => $item['tanggal'],
-                    'no_transaksi' => $item['no_transaksi'],
-                    'kode_barang' => $item['kode_barang'],
-                    'nama_barang' => $item['nama_barang'],
-                    'jumlah' => $item['jumlah'],
-                    'satuan' => $item['satuan'],
-                    'tipe' => 'masuk'
-                ];
-            }, $barangMasukModel->findAll()),
-            array_map(function($item) {
-                return [
-                    'tanggal' => $item['tanggal'],
-                    'no_transaksi' => $item['no_transaksi'],
-                    'kode_barang' => $item['kode_barang'],
-                    'nama_barang' => $item['nama_barang'],
-                    'jumlah' => $item['jumlah'],
-                    'satuan' => $item['satuan'],
-                    'tipe' => 'keluar'
-                ];
-            }, $barangKeluarModel->findAll())
-        );
-        
+
+        // Apply date range filter if provided
+        if ($tanggal_awal && $tanggal_akhir) {
+            $barangMasukQuery->where('tanggal >=', $tanggal_awal)
+                ->where('tanggal <=', $tanggal_akhir);
+
+            $barangKeluarQuery->where('tanggal >=', $tanggal_awal)
+                ->where('tanggal <=', $tanggal_akhir);
+        }
+
+        // Get results
+        $barangMasuk = $barangMasukQuery->get()->getResultArray();
+        $barangKeluar = $barangKeluarQuery->get()->getResultArray();
+
+        // Combine and sort the results
+        $aktivitas = array_merge($barangMasuk, $barangKeluar);
         usort($aktivitas, function($a, $b) {
             return strtotime($b['tanggal']) - strtotime($a['tanggal']);
         });
-        
-        $data = [
-            'aktivitas' => $aktivitas,
-            'tanggal' => date('d/m/Y')
-        ];
-        
-        $html = view('dashboard/export_pdf', $data);
-        
-        $pdf = new TCPDF('L', 'mm', 'A4', true, 'UTF-8');
-        $pdf->SetCreator('Sistem Gudang');
-        $pdf->SetAuthor('Admin');
-        $pdf->SetTitle('Laporan Aktivitas');
-        
-        $pdf->setPrintHeader(false);
-        $pdf->setPrintFooter(false);
-        
-        $pdf->AddPage();
-        $pdf->writeHTML($html);
-        
-        $this->response->setContentType('application/pdf');
-        $pdf->Output('laporan-aktivitas.pdf', 'I');
+
+        // Get only the latest 10 records
+        return array_slice($aktivitas, 0, 10);
     }
 
-    public function exportExcel()
+    public function exportAktivitasPdf()
     {
-        $time_filter = $this->request->getGet('time_filter');
-        
-        $barangMasukModel = new BarangMasukModel();
-        $barangKeluarModel = new BarangKeluarModel();
-        
-        if ($time_filter && $time_filter !== 'all') {
-            $days = (int)$time_filter;
-            $startDate = date('Y-m-d', strtotime("-$days days"));
-            $endDate = date('Y-m-d');
-            
-            $barangMasukModel->where('tanggal >=', $startDate)
-                            ->where('tanggal <=', $endDate);
-            
-            $barangKeluarModel->where('tanggal >=', $startDate)
-                             ->where('tanggal <=', $endDate);
-        }
-        
-        $aktivitas = array_merge(
-            array_map(function($item) {
-                return [
-                    'tanggal' => $item['tanggal'],
-                    'no_transaksi' => $item['no_transaksi'],
-                    'kode_barang' => $item['kode_barang'],
-                    'nama_barang' => $item['nama_barang'],
-                    'jumlah' => $item['jumlah'],
-                    'satuan' => $item['satuan'],
-                    'tipe' => 'masuk'
-                ];
-            }, $barangMasukModel->findAll()),
-            array_map(function($item) {
-                return [
-                    'tanggal' => $item['tanggal'],
-                    'no_transaksi' => $item['no_transaksi'],
-                    'kode_barang' => $item['kode_barang'],
-                    'nama_barang' => $item['nama_barang'],
-                    'jumlah' => $item['jumlah'],
-                    'satuan' => $item['satuan'],
-                    'tipe' => 'keluar'
-                ];
-            }, $barangKeluarModel->findAll())
-        );
-        
-        usort($aktivitas, function($a, $b) {
-            return strtotime($b['tanggal']) - strtotime($a['tanggal']);
-        });
+        $search = $this->request->getGet('search');
+        $tanggal_awal = $this->request->getGet('tanggal_awal');
+        $tanggal_akhir = $this->request->getGet('tanggal_akhir');
 
-        $spreadsheet = new Spreadsheet();
-        $sheet = $spreadsheet->getActiveSheet();
+        $aktivitas = $this->getAktivitasTerbaru($search, $tanggal_awal, $tanggal_akhir);
         
-        // Headers
-        $sheet->setCellValue('A1', 'No');
-        $sheet->setCellValue('B1', 'Tanggal');
-        $sheet->setCellValue('C1', 'No Transaksi');
-        $sheet->setCellValue('D1', 'Kode Barang');
-        $sheet->setCellValue('E1', 'Nama Barang');
-        $sheet->setCellValue('F1', 'Jumlah');
-        $sheet->setCellValue('G1', 'Satuan');
-        $sheet->setCellValue('H1', 'Tipe');
+        $html = view('dashboard/export_pdf', [
+            'aktivitas' => $aktivitas,
+            'tanggal' => date('d/m/Y'),
+            'tanggal_awal' => $tanggal_awal,
+            'tanggal_akhir' => $tanggal_akhir
+        ]);
+
+        ExportHelper::exportToPdf($html, 'aktivitas_terbaru_' . date('Ymd'));
+    }
+
+    public function exportAktivitasExcel()
+    {
+        $search = $this->request->getGet('search');
+        $tanggal_awal = $this->request->getGet('tanggal_awal');
+        $tanggal_akhir = $this->request->getGet('tanggal_akhir');
+
+        $aktivitas = $this->getAktivitasTerbaru($search, $tanggal_awal, $tanggal_akhir);
         
-        // Data
-        $row = 2;
-        foreach ($aktivitas as $index => $item) {
-            $sheet->setCellValue('A' . $row, $index + 1);
-            $sheet->setCellValue('B' . $row, date('d/m/Y', strtotime($item['tanggal'])));
-            $sheet->setCellValue('C' . $row, $item['no_transaksi']);
-            $sheet->setCellValue('D' . $row, $item['kode_barang']);
-            $sheet->setCellValue('E' . $row, $item['nama_barang']);
-            $sheet->setCellValue('F' . $row, $item['jumlah']);
-            $sheet->setCellValue('G' . $row, $item['satuan']);
-            $sheet->setCellValue('H' . $row, ucfirst($item['tipe']));
-            $row++;
-        }
+        $headers = ['Tanggal', 'No Transaksi', 'Kode Barang', 'Nama Barang', 'Jumlah', 'Satuan', 'Tipe'];
         
-        $writer = new Xlsx($spreadsheet);
-        
-        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-        header('Content-Disposition: attachment;filename=laporan-aktivitas.xlsx');
-        header('Cache-Control: max-age=0');
-        
-        $writer->save('php://output');
-        exit();
+        $data = array_map(function($item) {
+            return [
+                date('d/m/Y', strtotime($item['tanggal'])),
+                $item['no_transaksi'],
+                $item['kode_barang'],
+                $item['nama_barang'],
+                $item['jumlah'],
+                $item['satuan'],
+                ucfirst($item['tipe'])
+            ];
+        }, $aktivitas);
+
+        ExportHelper::exportToExcel($data, $headers, 'aktivitas_terbaru_' . date('Ymd'));
     }
 } 

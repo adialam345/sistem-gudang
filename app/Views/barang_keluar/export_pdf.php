@@ -60,7 +60,7 @@
                 <th>Nama Barang</th>
                 <th>Jumlah</th>
                 <th>Satuan</th>
-                <th>Penerima</th>
+                <th>Tujuan</th>
                 <th>Keterangan</th>
             </tr>
         </thead>
@@ -73,7 +73,7 @@
                 <td><?= $item['nama_barang'] ?></td>
                 <td><?= number_format($item['jumlah']) ?></td>
                 <td><?= $item['satuan'] ?></td>
-                <td><?= $item['penerima'] ?></td>
+                <td><?= $item['tujuan'] ?></td>
                 <td><?= $item['keterangan'] ?></td>
             </tr>
             <?php endforeach; ?>
