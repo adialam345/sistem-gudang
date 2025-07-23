@@ -38,7 +38,7 @@
         </div>
         <div class="px-4 sm:px-6 py-5">
             <form id="searchForm" action="<?= site_url('barang-masuk') ?>" method="get">
-                <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 form-responsive">
+                <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5 form-responsive">
                     <div>
                         <label for="search" class="block text-sm font-medium text-gray-700">Cari</label>
                         <div class="mt-1">
@@ -46,6 +46,17 @@
                                    placeholder="Kode, nama, atau no transaksi" 
                                    class="shadow-sm focus:ring-warehouse-500 focus:border-warehouse-500 block w-full sm:text-sm border-gray-300 rounded-lg" 
                                    autocomplete="off">
+                        </div>
+                    </div>
+                    <div>
+                        <label for="time_filter" class="block text-sm font-medium text-gray-700">Filter Waktu</label>
+                        <div class="mt-1">
+                            <select name="time_filter" id="time_filter" class="shadow-sm focus:ring-warehouse-500 focus:border-warehouse-500 block w-full sm:text-sm border-gray-300 rounded-lg">
+                                <option value="all" <?= ($time_filter ?? 'all') === 'all' ? 'selected' : '' ?>>Semua</option>
+                                <option value="1" <?= ($time_filter ?? '') === '1' ? 'selected' : '' ?>>1 Hari Terakhir</option>
+                                <option value="7" <?= ($time_filter ?? '') === '7' ? 'selected' : '' ?>>7 Hari Terakhir</option>
+                                <option value="30" <?= ($time_filter ?? '') === '30' ? 'selected' : '' ?>>30 Hari Terakhir</option>
+                            </select>
                         </div>
                     </div>
                     <div>

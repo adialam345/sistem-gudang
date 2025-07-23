@@ -238,23 +238,14 @@ class Barang extends BaseController
         return redirect()->to('/barang')->with('success', 'Barang berhasil dihapus');
     }
 
-    private function _getBarangDataForExport()
-    {
-        $barangData = $this->barangModel->select('barang.*, kategori.nama as kategori')
-            ->join('kategori', 'kategori.id = barang.kategori_id', 'left')
-            ->findAll();
-
-        foreach ($barangData as &$item) {
-            $item['stok'] = $this->barangModel->getCurrentStock($item['id']);
-        }
-
-        return $barangData;
-    }
-
     public function exportPdf()
     {
-        $barang = $this->_getBarangDataForExport();
-
+        $db = \Config\Database::connect();
+        $builder = $db->table('barang b');
+        $builder->select('b.*, COALESCE(k.nama, "-") as kategori')
+                ->join('kategori k', 'k.id = b.kategori_id', 'left');
+        $barang = $builder->get()->getResultArray();
+        
         $html = view('barang/export_pdf', [
             'barang' => $barang,
             'tanggal' => date('d/m/Y')
@@ -265,15 +256,19 @@ class Barang extends BaseController
 
     public function exportExcel()
     {
-        $barang = $this->_getBarangDataForExport();
-
+        $db = \Config\Database::connect();
+        $builder = $db->table('barang b');
+        $builder->select('b.*, COALESCE(k.nama, "-") as kategori')
+                ->join('kategori k', 'k.id = b.kategori_id', 'left');
+        $barang = $builder->get()->getResultArray();
+        
         $headers = ['Kode', 'Nama', 'Kategori', 'Satuan', 'Stok', 'Deskripsi'];
-
-        $data = array_map(function ($item) {
+        
+        $data = array_map(function($item) {
             return [
                 $item['kode'],
                 $item['nama'],
-                $item['kategori'] ?? '-',
+                $item['kategori'],
                 $item['satuan'],
                 $item['stok'],
                 $item['deskripsi']
@@ -282,4 +277,4 @@ class Barang extends BaseController
 
         ExportHelper::exportToExcel($data, $headers, 'daftar_barang_' . date('Ymd'));
     }
-}
+} 

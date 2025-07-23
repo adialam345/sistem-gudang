@@ -111,14 +111,14 @@
                 <div class="sm:flex sm:items-center sm:justify-between mb-6">
                     <h3 class="text-lg font-medium text-gray-900">Aktivitas Terbaru</h3>
                     <div class="mt-4 sm:mt-0">
-                        <a href="<?= site_url('dashboard/export-aktivitas-excel' . (isset($_GET['search']) || isset($_GET['tanggal_awal']) ? '?' . http_build_query($_GET) : '')) ?>" 
+                        <a href="<?= site_url('dashboard/export-excel' . ($time_filter && $time_filter !== 'all' ? '?time_filter=' . $time_filter : '')) ?>" 
                            class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 mr-2">
                             <svg class="-ml-1 mr-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                             </svg>
                             Excel
                         </a>
-                        <a href="<?= site_url('dashboard/export-aktivitas-pdf' . (isset($_GET['search']) || isset($_GET['tanggal_awal']) ? '?' . http_build_query($_GET) : '')) ?>" 
+                        <a href="<?= site_url('dashboard/export-pdf' . ($time_filter && $time_filter !== 'all' ? '?time_filter=' . $time_filter : '')) ?>" 
                            class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
                             <svg class="-ml-1 mr-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -142,6 +142,18 @@
                         </div>
 
                         <div class="sm:col-span-2">
+                            <label for="time_filter" class="block text-sm font-medium text-gray-700">Filter Waktu</label>
+                            <div class="mt-1">
+                                <select name="time_filter" id="time_filter" class="shadow-sm focus:ring-warehouse-500 focus:border-warehouse-500 block w-full sm:text-sm border-gray-300 rounded-md">
+                                    <option value="all" <?= ($time_filter ?? 'all') === 'all' ? 'selected' : '' ?>>Semua</option>
+                                    <option value="1" <?= ($time_filter ?? '') === '1' ? 'selected' : '' ?>>1 Hari Terakhir</option>
+                                    <option value="7" <?= ($time_filter ?? '') === '7' ? 'selected' : '' ?>>7 Hari Terakhir</option>
+                                    <option value="30" <?= ($time_filter ?? '') === '30' ? 'selected' : '' ?>>30 Hari Terakhir</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="sm:col-span-2">
                             <label for="tanggal_awal" class="block text-sm font-medium text-gray-700">Tanggal Awal</label>
                             <div class="mt-1">
                                 <input type="date" name="tanggal_awal" id="tanggal_awal" 
@@ -157,8 +169,8 @@
                                        value="<?= $tanggal_akhir ?>"
                                        class="shadow-sm focus:ring-warehouse-500 focus:border-warehouse-500 block w-full sm:text-sm border-gray-300 rounded-md">
                             </div>
-            </div>
-        </div>
+                        </div>
+                    </div>
 
                     <div class="mt-4 flex justify-end">
                         <a href="<?= site_url('dashboard') ?>" 

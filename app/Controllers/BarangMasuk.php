@@ -48,35 +48,35 @@ class BarangMasuk extends BaseController
         $search = $this->request->getGet('search');
         $tanggal_awal = $this->request->getGet('tanggal_awal');
         $tanggal_akhir = $this->request->getGet('tanggal_akhir');
+        $time_filter = $this->request->getGet('time_filter');
 
-        $query = $this->barangMasukModel;
-
+        $model = new BarangMasukModel();
+        
         if ($search) {
-            $query->groupStart()
-                  ->like('no_transaksi', $search)
-                  ->orLike('kode_barang', $search)
+            $model->groupStart()
+                  ->like('kode_barang', $search)
                   ->orLike('nama_barang', $search)
+                  ->orLike('no_transaksi', $search)
                   ->groupEnd();
         }
 
-        if ($tanggal_awal && $tanggal_akhir) {
-            $query->where('tanggal >=', $tanggal_awal)
+        if ($time_filter && $time_filter !== 'all') {
+            $days = (int)$time_filter;
+            $model->where('tanggal >=', date('Y-m-d', strtotime("-$days days")))
+                  ->where('tanggal <=', date('Y-m-d'));
+        } else if ($tanggal_awal && $tanggal_akhir) {
+            $model->where('tanggal >=', $tanggal_awal)
                   ->where('tanggal <=', $tanggal_akhir);
-        } elseif ($tanggal_awal) {
-            $query->where('tanggal >=', $tanggal_awal);
-        } elseif ($tanggal_akhir) {
-            $query->where('tanggal <=', $tanggal_akhir);
         }
 
         $data = [
             'title' => 'Barang Masuk',
-            'barangMasuk' => $query->orderBy('tanggal', 'DESC')
-                                  ->orderBy('no_transaksi', 'DESC')
-                                  ->paginate(10),
-            'pager' => $query->pager,
+            'barangMasuk' => $model->paginate(10),
+            'pager' => $model->pager,
             'search' => $search,
             'tanggal_awal' => $tanggal_awal,
-            'tanggal_akhir' => $tanggal_akhir
+            'tanggal_akhir' => $tanggal_akhir,
+            'time_filter' => $time_filter
         ];
 
         return view('barang_masuk/index', $data);
@@ -315,32 +315,47 @@ class BarangMasuk extends BaseController
         $search = $this->request->getGet('search');
         $tanggal_awal = $this->request->getGet('tanggal_awal');
         $tanggal_akhir = $this->request->getGet('tanggal_akhir');
+        $time_filter = $this->request->getGet('time_filter');
 
-        $query = $this->barangMasukModel;
-
+        $model = new BarangMasukModel();
+        
         if ($search) {
-            $query->groupStart()
-                  ->like('no_transaksi', $search)
-                  ->orLike('kode_barang', $search)
+            $model->groupStart()
+                  ->like('kode_barang', $search)
                   ->orLike('nama_barang', $search)
+                  ->orLike('no_transaksi', $search)
                   ->groupEnd();
         }
 
-        if ($tanggal_awal && $tanggal_akhir) {
-            $query->where('DATE(tanggal) >=', $tanggal_awal)
-                  ->where('DATE(tanggal) <=', $tanggal_akhir);
+        if ($time_filter && $time_filter !== 'all') {
+            $days = (int)$time_filter;
+            $model->where('tanggal >=', date('Y-m-d', strtotime("-$days days")))
+                  ->where('tanggal <=', date('Y-m-d'));
+        } else if ($tanggal_awal && $tanggal_akhir) {
+            $model->where('tanggal >=', $tanggal_awal)
+                  ->where('tanggal <=', $tanggal_akhir);
         }
 
-        $barangMasuk = $query->findAll();
-        
-        $html = view('barang_masuk/export_pdf', [
-            'barangMasuk' => $barangMasuk,
-            'tanggal' => date('d/m/Y'),
-            'tanggal_awal' => $tanggal_awal,
-            'tanggal_akhir' => $tanggal_akhir
-        ]);
+        $data = [
+            'barangMasuk' => $model->findAll(),
+            'tanggal' => date('d/m/Y')
+        ];
 
-        ExportHelper::exportToPdf($html, 'barang_masuk_' . date('Ymd'));
+        $html = view('barang_masuk/export_pdf', $data);
+        
+        $pdf = new TCPDF('L', 'mm', 'A4', true, 'UTF-8');
+        $pdf->SetCreator('Sistem Gudang');
+        $pdf->SetAuthor('Admin');
+        $pdf->SetTitle('Laporan Barang Masuk');
+        
+        $pdf->setPrintHeader(false);
+        $pdf->setPrintFooter(false);
+        
+        $pdf->AddPage();
+        $pdf->writeHTML($html);
+        
+        $this->response->setContentType('application/pdf');
+        $pdf->Output('laporan-barang-masuk.pdf', 'I');
     }
 
     public function exportExcel()
@@ -348,39 +363,65 @@ class BarangMasuk extends BaseController
         $search = $this->request->getGet('search');
         $tanggal_awal = $this->request->getGet('tanggal_awal');
         $tanggal_akhir = $this->request->getGet('tanggal_akhir');
+        $time_filter = $this->request->getGet('time_filter');
 
-        $query = $this->barangMasukModel;
-
+        $model = new BarangMasukModel();
+        
         if ($search) {
-            $query->groupStart()
-                  ->like('no_transaksi', $search)
-                  ->orLike('kode_barang', $search)
+            $model->groupStart()
+                  ->like('kode_barang', $search)
                   ->orLike('nama_barang', $search)
+                  ->orLike('no_transaksi', $search)
                   ->groupEnd();
         }
 
-        if ($tanggal_awal && $tanggal_akhir) {
-            $query->where('DATE(tanggal) >=', $tanggal_awal)
-                  ->where('DATE(tanggal) <=', $tanggal_akhir);
+        if ($time_filter && $time_filter !== 'all') {
+            $days = (int)$time_filter;
+            $model->where('tanggal >=', date('Y-m-d', strtotime("-$days days")))
+                  ->where('tanggal <=', date('Y-m-d'));
+        } else if ($tanggal_awal && $tanggal_akhir) {
+            $model->where('tanggal >=', $tanggal_awal)
+                  ->where('tanggal <=', $tanggal_akhir);
         }
 
-        $barangMasuk = $query->findAll();
-        
-        $headers = ['Tanggal', 'No Transaksi', 'Kode Barang', 'Nama Barang', 'Jumlah', 'Satuan', 'Supplier', 'Keterangan'];
-        
-        $data = array_map(function($item) {
-            return [
-                date('d/m/Y', strtotime($item['tanggal'])),
-                $item['no_transaksi'],
-                $item['kode_barang'],
-                $item['nama_barang'],
-                $item['jumlah'],
-                $item['satuan'],
-                $item['supplier'],
-                $item['keterangan']
-            ];
-        }, $barangMasuk);
+        $barangMasuk = $model->findAll();
 
-        ExportHelper::exportToExcel($data, $headers, 'barang_masuk_' . date('Ymd'));
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        
+        // Headers
+        $sheet->setCellValue('A1', 'No');
+        $sheet->setCellValue('B1', 'Tanggal');
+        $sheet->setCellValue('C1', 'No Transaksi');
+        $sheet->setCellValue('D1', 'Kode Barang');
+        $sheet->setCellValue('E1', 'Nama Barang');
+        $sheet->setCellValue('F1', 'Jumlah');
+        $sheet->setCellValue('G1', 'Satuan');
+        $sheet->setCellValue('H1', 'Supplier');
+        $sheet->setCellValue('I1', 'Keterangan');
+        
+        // Data
+        $row = 2;
+        foreach ($barangMasuk as $index => $item) {
+            $sheet->setCellValue('A' . $row, $index + 1);
+            $sheet->setCellValue('B' . $row, date('d/m/Y', strtotime($item['tanggal'])));
+            $sheet->setCellValue('C' . $row, $item['no_transaksi']);
+            $sheet->setCellValue('D' . $row, $item['kode_barang']);
+            $sheet->setCellValue('E' . $row, $item['nama_barang']);
+            $sheet->setCellValue('F' . $row, $item['jumlah']);
+            $sheet->setCellValue('G' . $row, $item['satuan']);
+            $sheet->setCellValue('H' . $row, $item['supplier']);
+            $sheet->setCellValue('I' . $row, $item['keterangan']);
+            $row++;
+        }
+        
+        $writer = new Xlsx($spreadsheet);
+        
+        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        header('Content-Disposition: attachment;filename=laporan-barang-masuk.xlsx');
+        header('Cache-Control: max-age=0');
+        
+        $writer->save('php://output');
+        exit();
     }
 } 
