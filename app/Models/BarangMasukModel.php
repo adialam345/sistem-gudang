@@ -18,7 +18,38 @@ class BarangMasukModel extends Model
     protected $useTimestamps = true;
     protected $createdField = 'created_at';
     protected $updatedField = 'updated_at';
-    protected $validationRules = [];
-    protected $validationMessages = [];
-    protected $skipValidation = false;
+
+    protected $validationRules = [
+        'tanggal' => 'required',
+        'no_transaksi' => 'required|is_unique[barang_masuk.no_transaksi,id,{id}]',
+        'barang_id' => 'required|numeric',
+        'kode_barang' => 'required',
+        'nama_barang' => 'required',
+        'jumlah' => 'required|numeric|greater_than[0]',
+        'satuan' => 'required',
+        'supplier' => 'required'
+    ];
+
+    protected $validationMessages = [
+        'no_transaksi' => [
+            'is_unique' => 'Nomor transaksi sudah digunakan'
+        ],
+        'jumlah' => [
+            'greater_than' => 'Jumlah harus lebih dari 0'
+        ]
+    ];
+
+    public function insertWithValidation($data)
+    {
+        try {
+            if (!$this->validate($data)) {
+                $errors = $this->errors();
+                throw new \Exception(implode(', ', $errors));
+            }
+
+            return $this->insert($data);
+        } catch (\Exception $e) {
+            throw new \Exception('Gagal mencatat barang masuk: ' . $e->getMessage());
+        }
+    }
 } 

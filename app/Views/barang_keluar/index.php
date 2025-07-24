@@ -22,6 +22,7 @@
     </div>
 
     <!-- Action Button -->
+    <?php if (session()->get('role') === 'admin'): ?>
     <div class="flex justify-end">
         <a href="<?= site_url('barang-keluar/create') ?>" 
            class="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-lg text-white bg-warehouse-500 shadow-lg hover:bg-warehouse-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-warehouse-500 transition-all duration-200 hover:scale-105">
@@ -31,6 +32,7 @@
             Tambah Barang Keluar
         </a>
     </div>
+    <?php endif; ?>
 
     <!-- Search & Filter -->
     <div class="bg-white rounded-lg shadow-lg">
@@ -112,7 +114,9 @@
                             <th class="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Jumlah</th>
                             <th class="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tujuan</th>
                             <th class="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Keterangan</th>
+                            <?php if (session()->get('role') === 'admin'): ?>
                             <th class="px-4 sm:px-6 py-3"></th>
+                            <?php endif; ?>
                         </tr>
                     </thead>
                     <tbody class="bg-white divide-y divide-gray-200">
@@ -154,16 +158,18 @@
                                         <?= esc($item['keterangan']) ?>
                                     </td>
                                     <td class="px-4 sm:px-6 py-4 whitespace-nowrap text-right text-sm font-medium" data-label="Aksi">
-                                        <a href="<?= site_url('barang-keluar/edit/' . $item['id']) ?>" 
-                                           class="text-warehouse-600 hover:text-warehouse-900 mr-3">Edit</a>
-                                        <form action="<?= site_url('barang-keluar/delete/' . $item['id']) ?>" method="post" class="inline">
-                                            <?= csrf_field() ?>
-                                            <button type="submit" 
-                                                    class="text-red-600 hover:text-red-900" 
-                                                    onclick="return confirm('Yakin ingin menghapus?')">
-                                                Hapus
-                                            </button>
-                                        </form>
+                                        <?php if (session()->get('role') === 'admin'): ?>
+                                            <a href="<?= site_url('barang-keluar/edit/' . $item['id']) ?>" 
+                                               class="text-warehouse-600 hover:text-warehouse-900 mr-3">Edit</a>
+                                            <form action="<?= site_url('barang-keluar/delete/' . $item['id']) ?>" method="post" class="inline">
+                                                <?= csrf_field() ?>
+                                                <button type="submit" 
+                                                        class="text-red-600 hover:text-red-900" 
+                                                        onclick="return confirm('Yakin ingin menghapus?')">
+                                                    Hapus
+                                                </button>
+                                            </form>
+                                        <?php endif; ?>
                                     </td>
                                 </tr>
                             <?php endforeach; ?>

@@ -4,7 +4,7 @@ namespace App\Database\Migrations;
 
 use CodeIgniter\Database\Migration;
 
-class CreateBarangKeluarTable_2024_07_20_000004 extends Migration
+class CreateBarangKeluarTable extends Migration
 {
     public function up()
     {

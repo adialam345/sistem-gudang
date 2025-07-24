@@ -84,18 +84,9 @@ class BarangMasuk extends BaseController
 
     public function create()
     {
-        // Get list of barang with current stock info
-        $barangList = $this->barangModel->findAll();
-        foreach ($barangList as &$barang) {
-            // Get current stock
-            $masuk = $this->barangMasukModel->selectSum('jumlah')->where('barang_id', $barang['id'])->first();
-            $keluar = $this->db->table('barang_keluar')->selectSum('jumlah')->where('barang_id', $barang['id'])->get()->getRow();
-            $barang['stok'] = ($masuk['jumlah'] ?? 0) - ($keluar->jumlah ?? 0);
-        }
-
         $data = [
             'title' => 'Tambah Barang Masuk',
-            'barang' => $barangList,
+            'barang' => $this->barangModel->findAll(),
             'validation' => \Config\Services::validation()
         ];
 
@@ -172,6 +163,9 @@ class BarangMasuk extends BaseController
                 throw new \Exception('Gagal menambahkan barang masuk');
             }
 
+            // Update stok di tabel barang
+            $this->barangModel->syncStok($barang['id']);
+
             $this->db->transCommit();
             return redirect()->to('/barang-masuk')->with('success', 'Barang masuk berhasil ditambahkan');
         } catch (\Exception $e) {
@@ -187,19 +181,10 @@ class BarangMasuk extends BaseController
             return redirect()->to('/barang-masuk')->with('error', 'Data tidak ditemukan');
         }
 
-        // Get list of barang with current stock info
-        $barangList = $this->barangModel->findAll();
-        foreach ($barangList as &$barang) {
-            // Get current stock
-            $masuk = $this->barangMasukModel->selectSum('jumlah')->where('barang_id', $barang['id'])->first();
-            $keluar = $this->db->table('barang_keluar')->selectSum('jumlah')->where('barang_id', $barang['id'])->get()->getRow();
-            $barang['stok'] = ($masuk['jumlah'] ?? 0) - ($keluar->jumlah ?? 0);
-        }
-
         $data = [
             'title' => 'Edit Barang Masuk',
             'barangMasuk' => $barangMasuk,
-            'barang' => $barangList,
+            'barang' => $this->barangModel->findAll(),
             'validation' => \Config\Services::validation()
         ];
 
@@ -210,39 +195,12 @@ class BarangMasuk extends BaseController
     {
         $barangMasuk = $this->barangMasukModel->find($id);
         if (!$barangMasuk) {
-            return redirect()->to('/barang-masuk')->with('error', 'Data tidak ditemukan');
-        }
-
-        $rules = [
-            'tanggal' => [
-                'rules' => 'required',
-                'errors' => [
-                    'required' => 'Tanggal harus diisi'
-                ]
-            ],
-            'barang_id' => [
-                'rules' => 'required',
-                'errors' => [
-                    'required' => 'Barang harus dipilih'
-                ]
-            ],
-            'jumlah' => [
-                'rules' => 'required|numeric|greater_than[0]',
-                'errors' => [
-                    'required' => 'Jumlah harus diisi',
-                    'numeric' => 'Jumlah harus berupa angka',
-                    'greater_than' => 'Jumlah harus lebih dari 0'
-                ]
-            ]
-        ];
-
-        if (!$this->validate($rules)) {
-            return redirect()->back()->withInput()->with('validation', $this->validator);
+            return redirect()->back()->with('error', 'Data tidak ditemukan');
         }
 
         $barang = $this->barangModel->find($this->request->getPost('barang_id'));
         if (!$barang) {
-            return redirect()->back()->withInput()->with('error', 'Barang tidak ditemukan');
+            return redirect()->back()->with('error', 'Barang tidak ditemukan');
         }
 
         $this->db->transStart();
@@ -264,6 +222,12 @@ class BarangMasuk extends BaseController
                 throw new \Exception('Gagal mengupdate barang masuk');
             }
 
+            // Update stok di tabel barang
+            $this->barangModel->syncStok($barang['id']);
+            if ($barang['id'] != $barangMasuk['barang_id']) {
+                $this->barangModel->syncStok($barangMasuk['barang_id']);
+            }
+
             $this->db->transCommit();
             return redirect()->to('/barang-masuk')->with('success', 'Barang masuk berhasil diupdate');
         } catch (\Exception $e) {
@@ -279,30 +243,18 @@ class BarangMasuk extends BaseController
             return redirect()->to('/barang-masuk')->with('error', 'Data tidak ditemukan');
         }
 
-        // Check if deleting this would make stock negative
-        $masuk = $this->barangMasukModel->selectSum('jumlah')
-                                       ->where('barang_id', $barangMasuk['barang_id'])
-                                       ->where('id !=', $id)
-                                       ->first();
-        $keluar = $this->db->table('barang_keluar')
-                          ->selectSum('jumlah')
-                          ->where('barang_id', $barangMasuk['barang_id'])
-                          ->get()
-                          ->getRow();
-
-        $stokSetelahHapus = ($masuk['jumlah'] ?? 0) - ($keluar->jumlah ?? 0);
-        if ($stokSetelahHapus < 0) {
-            return redirect()->to('/barang-masuk')->with('error', 'Barang masuk tidak dapat dihapus karena akan membuat stok menjadi negatif');
-        }
-
         $this->db->transStart();
 
         try {
+            // Delete barang masuk record
             if (!$this->barangMasukModel->delete($id)) {
                 throw new \Exception('Gagal menghapus barang masuk');
             }
 
-            $this->db->transCommit();
+            // Update stok di tabel barang
+            $this->barangModel->syncStok($barangMasuk['barang_id']);
+
+            $this->db->transComplete();
             return redirect()->to('/barang-masuk')->with('success', 'Barang masuk berhasil dihapus');
         } catch (\Exception $e) {
             $this->db->transRollback();

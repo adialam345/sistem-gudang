@@ -24,9 +24,8 @@ class BarangKeluar extends BaseController
 
     private function getCurrentStock($barangId)
     {
-        $totalMasuk = $this->barangMasukModel->where('barang_id', $barangId)->selectSum('jumlah')->get()->getRow()->jumlah ?? 0;
-        $totalKeluar = $this->barangKeluarModel->where('barang_id', $barangId)->selectSum('jumlah')->get()->getRow()->jumlah ?? 0;
-        return $totalMasuk - $totalKeluar;
+        $barang = $this->barangModel->find($barangId);
+        return $barang ? (int)$barang['stok'] : 0;
     }
 
     private function generateTransactionNumber()
@@ -90,15 +89,9 @@ class BarangKeluar extends BaseController
 
     public function create()
     {
-        // Get list of barang with current stock info
-        $barangList = $this->barangModel->findAll();
-        foreach ($barangList as &$item) {
-            $item['stok'] = $this->getCurrentStock($item['id']);
-        }
-
         $data = [
             'title' => 'Tambah Barang Keluar',
-            'barang' => $barangList,
+            'barang' => $this->barangModel->findAll(),
             'validation' => \Config\Services::validation()
         ];
 
@@ -144,7 +137,7 @@ class BarangKeluar extends BaseController
                            ->with('error', 'Validasi gagal: ' . implode(', ', $this->validator->getErrors()));
         }
 
-            $data = [
+        $data = [
             'tanggal' => $this->request->getPost('tanggal'),
             'no_transaksi' => $this->generateTransactionNumber(),
             'barang_id' => $this->request->getPost('barang_id'),
@@ -152,9 +145,9 @@ class BarangKeluar extends BaseController
             'nama_barang' => $this->request->getPost('nama_barang'),
             'jumlah' => $this->request->getPost('jumlah'),
             'satuan' => $this->request->getPost('satuan'),
-                'tujuan' => $this->request->getPost('tujuan'),
-                'keterangan' => $this->request->getPost('keterangan')
-            ];
+            'tujuan' => $this->request->getPost('tujuan'),
+            'keterangan' => $this->request->getPost('keterangan')
+        ];
 
         $db = \Config\Database::connect();
         $db->transStart();
@@ -176,6 +169,9 @@ class BarangKeluar extends BaseController
             if (!$this->barangKeluarModel->insert($data)) {
                 throw new \Exception('Gagal menyimpan data: ' . implode(', ', $this->barangKeluarModel->errors()));
             }
+
+            // Update stok di tabel barang
+            $this->barangModel->syncStok($data['barang_id']);
 
             $db->transComplete();
 
@@ -203,7 +199,6 @@ class BarangKeluar extends BaseController
         $barangList = $this->barangModel->findAll();
         foreach ($barangList as &$item) {
             // Add back current transaction amount to get available stock
-            $item['stok'] = $this->getCurrentStock($item['id']);
             if ($item['id'] == $barangKeluar['barang_id']) {
                 $item['stok'] += $barangKeluar['jumlah'];
             }
@@ -226,16 +221,16 @@ class BarangKeluar extends BaseController
             return redirect()->back()->with('error', 'Data tidak ditemukan');
         }
 
-            $data = [
-                'tanggal' => $this->request->getPost('tanggal'),
+        $data = [
+            'tanggal' => $this->request->getPost('tanggal'),
             'barang_id' => $this->request->getPost('barang_id'),
             'kode_barang' => $this->request->getPost('kode_barang'),
             'nama_barang' => $this->request->getPost('nama_barang'),
             'jumlah' => $this->request->getPost('jumlah'),
             'satuan' => $this->request->getPost('satuan'),
-                'tujuan' => $this->request->getPost('tujuan'),
-                'keterangan' => $this->request->getPost('keterangan')
-            ];
+            'tujuan' => $this->request->getPost('tujuan'),
+            'keterangan' => $this->request->getPost('keterangan')
+        ];
 
         $db = \Config\Database::connect();
         $db->transStart();
@@ -253,6 +248,12 @@ class BarangKeluar extends BaseController
 
             // Update barang keluar record
             $this->barangKeluarModel->update($id, $data);
+
+            // Update stok di tabel barang
+            $this->barangModel->syncStok($data['barang_id']);
+            if ($data['barang_id'] != $oldData['barang_id']) {
+                $this->barangModel->syncStok($oldData['barang_id']);
+            }
 
             $db->transComplete();
 
@@ -280,6 +281,9 @@ class BarangKeluar extends BaseController
             // Delete barang keluar record
             $this->barangKeluarModel->delete($id);
 
+            // Update stok di tabel barang
+            $this->barangModel->syncStok($barangKeluar['barang_id']);
+
             $this->db->transComplete();
 
             if ($this->db->transStatus() === false) {
@@ -289,7 +293,7 @@ class BarangKeluar extends BaseController
             return redirect()->to('/barang-keluar')->with('success', 'Barang keluar berhasil dihapus');
         } catch (\Exception $e) {
             $this->db->transRollback();
-            return redirect()->back()->withInput()->with('error', $e->getMessage());
+            return redirect()->to('/barang-keluar')->with('error', 'Gagal menghapus barang keluar: ' . $e->getMessage());
         }
     }
 

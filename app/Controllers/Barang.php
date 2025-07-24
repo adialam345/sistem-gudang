@@ -5,17 +5,20 @@ namespace App\Controllers;
 use App\Helpers\ExportHelper;
 use App\Models\BarangModel;
 use App\Models\BarangMasukModel;
+use App\Models\BarangKeluarModel;
 
 class Barang extends BaseController
 {
     protected $barangModel;
     protected $barangMasukModel;
+    protected $barangKeluarModel;
     protected $db;
 
     public function __construct()
     {
         $this->barangModel = new BarangModel();
         $this->barangMasukModel = new BarangMasukModel();
+        $this->barangKeluarModel = new BarangKeluarModel();
         $this->db = \Config\Database::connect();
     }
 
@@ -46,17 +49,23 @@ class Barang extends BaseController
                 case 'nama_desc':
                     $query->orderBy('nama', 'DESC');
                     break;
+                case 'stok_asc':
+                    $query->orderBy('stok', 'ASC');
+                    break;
+                case 'stok_desc':
+                    $query->orderBy('stok', 'DESC');
+                    break;
                 default:
-                    $query->orderBy('kode', 'ASC');
+                    $query->orderBy('nama', 'ASC');
             }
         } else {
-            $query->orderBy('kode', 'ASC');
+            $query->orderBy('nama', 'ASC');
         }
 
-        $barang = $query->paginate(10);
         $categories = $this->barangModel->getCategories();
+        $barang = $query->paginate(10);
 
-        // Add category names and stock info to barang data
+        // Get category names and stock info
         foreach ($barang as &$item) {
             // Get category name
             foreach ($categories as $cat) {
@@ -65,11 +74,6 @@ class Barang extends BaseController
                     break;
                 }
             }
-
-            // Get current stock
-            $masuk = $this->barangMasukModel->selectSum('jumlah')->where('barang_id', $item['id'])->first();
-            $keluar = $this->db->table('barang_keluar')->selectSum('jumlah')->where('barang_id', $item['id'])->get()->getRow();
-            $item['stok'] = ($masuk['jumlah'] ?? 0) - ($keluar->jumlah ?? 0);
         }
 
         $data = [
@@ -276,5 +280,129 @@ class Barang extends BaseController
         }, $barang);
 
         ExportHelper::exportToExcel($data, $headers, 'daftar_barang_' . date('Ymd'));
+    }
+
+    public function updateStokLangsung()
+    {
+        if (!$this->request->isAJAX()) {
+            return $this->response->setJSON(['success' => false, 'message' => 'Invalid request']);
+        }
+
+        $barangId = $this->request->getPost('barang_id');
+        $stokBaru = (int)$this->request->getPost('stok');
+        $stokLama = (int)$this->request->getPost('old_stok');
+
+        if (!$barangId || !is_numeric($stokBaru) || $stokBaru < 0) {
+            return $this->response->setJSON(['success' => false, 'message' => 'Data tidak valid']);
+        }
+
+        $barang = $this->barangModel->find($barangId);
+        if (!$barang) {
+            return $this->response->setJSON(['success' => false, 'message' => 'Barang tidak ditemukan']);
+        }
+
+        $this->db->transStart();
+
+        try {
+            // Hitung selisih stok
+            $selisih = $stokBaru - $stokLama;
+
+            if ($selisih != 0) {
+                $tanggal = date('Y-m-d');
+                
+                if ($selisih > 0) {
+                    // Stok bertambah -> catat di barang masuk
+                    $noTransaksi = sprintf("BM/%s/ADJ%03d", date('Ymd'), rand(1, 999));
+                    $data = [
+                        'tanggal' => $tanggal,
+                        'no_transaksi' => $noTransaksi,
+                        'barang_id' => $barang['id'],
+                        'kode_barang' => $barang['kode'],
+                        'nama_barang' => $barang['nama'],
+                        'jumlah' => abs($selisih),
+                        'satuan' => $barang['satuan'],
+                        'supplier' => 'Penyesuaian stok',
+                        'keterangan' => 'Penyesuaian stok manual'
+                    ];
+                    
+                    if (!$this->barangMasukModel->insert($data)) {
+                        throw new \Exception('Gagal mencatat barang masuk');
+                    }
+                } else {
+                    // Stok berkurang -> catat di barang keluar
+                    $noTransaksi = sprintf("BK/%s/ADJ%03d", date('Ymd'), rand(1, 999));
+                    $data = [
+                        'tanggal' => $tanggal,
+                        'no_transaksi' => $noTransaksi,
+                        'barang_id' => $barang['id'],
+                        'kode_barang' => $barang['kode'],
+                        'nama_barang' => $barang['nama'],
+                        'jumlah' => abs($selisih),
+                        'satuan' => $barang['satuan'],
+                        'tujuan' => 'Penyesuaian stok',
+                        'keterangan' => 'Penyesuaian stok manual'
+                    ];
+                    
+                    if (!$this->barangKeluarModel->insert($data)) {
+                        throw new \Exception('Gagal mencatat barang keluar');
+                    }
+                }
+            }
+
+            // Update stok di tabel barang
+            $this->barangModel->update($barangId, ['stok' => $stokBaru]);
+            
+            $this->db->transComplete();
+
+            if ($this->db->transStatus() === false) {
+                throw new \Exception('Transaksi database gagal');
+            }
+
+            return $this->response->setJSON([
+                'success' => true, 
+                'message' => 'Stok berhasil diupdate',
+                'stok' => number_format($stokBaru)
+            ]);
+
+        } catch (\Exception $e) {
+            $this->db->transRollback();
+            log_message('error', 'Error updating stock: ' . $e->getMessage());
+            return $this->response->setJSON([
+                'success' => false, 
+                'message' => 'Gagal mengupdate stok: ' . $e->getMessage()
+            ]);
+        }
+    }
+
+    public function syncStok($id = null)
+    {
+        try {
+            if ($id) {
+                // Sync satu barang
+                $barang = $this->barangModel->find($id); // Ini akan otomatis sync
+                if (!$barang) {
+                    throw new \Exception('Barang tidak ditemukan');
+                }
+
+                return $this->response->setJSON([
+                    'success' => true,
+                    'message' => 'Stok berhasil disinkronkan',
+                    'stok' => number_format($barang['stok'])
+                ]);
+            } else {
+                // Sync semua barang
+                $this->barangModel->findAll(); // Ini akan otomatis sync semua
+                return redirect()->back()->with('success', 'Semua stok berhasil disinkronkan');
+            }
+        } catch (\Exception $e) {
+            if ($id) {
+                return $this->response->setJSON([
+                    'success' => false,
+                    'message' => 'Gagal menyinkronkan stok: ' . $e->getMessage()
+                ]);
+            } else {
+                return redirect()->back()->with('error', 'Gagal menyinkronkan stok: ' . $e->getMessage());
+            }
+        }
     }
 } 

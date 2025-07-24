@@ -4,7 +4,7 @@ namespace App\Database\Migrations;
 
 use CodeIgniter\Database\Migration;
 
-class CreateBarangTable20240720000002 extends Migration
+class CreateBarangTable extends Migration
 {
     public function up()
     {
