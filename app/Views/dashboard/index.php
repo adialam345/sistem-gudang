@@ -110,15 +110,31 @@
             <div class="px-6 py-5 border-b border-gray-200">
                 <div class="sm:flex sm:items-center sm:justify-between mb-6">
                     <h3 class="text-lg font-medium text-gray-900">Aktivitas Terbaru</h3>
-                    <div class="mt-4 sm:mt-0">
-                        <a href="<?= site_url('dashboard/export-aktivitas-excel' . (isset($_GET['search']) || isset($_GET['tanggal_awal']) ? '?' . http_build_query($_GET) : '')) ?>" 
-                           class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 mr-2">
+                    <div class="mt-4 sm:mt-0 flex items-center space-x-4">
+                        <!-- Filter Tipe Transaksi -->
+                        <div class="relative inline-block text-left">
+                            <select name="tipe" 
+                                    onchange="window.location.href='<?= site_url('dashboard') ?>?tipe='+this.value+'<?= $search ? '&search='.$search : '' ?><?= $tanggal_awal ? '&tanggal_awal='.$tanggal_awal : '' ?><?= $tanggal_akhir ? '&tanggal_akhir='.$tanggal_akhir : '' ?>'"
+                                    class="block w-56 pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-warehouse-500 focus:border-warehouse-500 sm:text-sm rounded-md bg-white shadow-sm appearance-none cursor-pointer">
+                                <option value="" class="py-2">Semua Transaksi</option>
+                                <option value="masuk" <?= isset($_GET['tipe']) && $_GET['tipe'] == 'masuk' ? 'selected' : '' ?> class="py-2">Barang Masuk</option>
+                                <option value="keluar" <?= isset($_GET['tipe']) && $_GET['tipe'] == 'keluar' ? 'selected' : '' ?> class="py-2">Barang Keluar</option>
+                            </select>
+                            <div class="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
+                                <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                    <path fill-rule="evenodd" d="M10 3a1 1 0 01.707.293l3 3a1 1 0 01-1.414 1.414L10 5.414 7.707 7.707a1 1 0 01-1.414-1.414l3-3A1 1 0 0110 3zm-3.707 9.293a1 1 0 011.414 0L10 14.586l2.293-2.293a1 1 0 011.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd" />
+                                </svg>
+                            </div>
+                        </div>
+
+                        <a href="<?= site_url('dashboard/export-aktivitas-excel' . (isset($_GET['search']) || isset($_GET['tanggal_awal']) || isset($_GET['tipe']) ? '?' . http_build_query($_GET) : '')) ?>" 
+                           class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
                             <svg class="-ml-1 mr-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                             </svg>
                             Excel
                         </a>
-                        <a href="<?= site_url('dashboard/export-aktivitas-pdf' . (isset($_GET['search']) || isset($_GET['tanggal_awal']) ? '?' . http_build_query($_GET) : '')) ?>" 
+                        <a href="<?= site_url('dashboard/export-aktivitas-pdf' . (isset($_GET['search']) || isset($_GET['tanggal_awal']) || isset($_GET['tipe']) ? '?' . http_build_query($_GET) : '')) ?>" 
                            class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
                             <svg class="-ml-1 mr-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -128,10 +144,10 @@
                     </div>
                 </div>
 
-                <!-- Search and Filter Form -->
+                <!-- Search and Date Filter Form -->
                 <form method="get" class="mb-6">
-                    <div class="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
-                        <div class="sm:col-span-2">
+                    <div class="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-3">
+                        <div>
                             <label for="search" class="block text-sm font-medium text-gray-700">Pencarian</label>
                             <div class="mt-1">
                                 <input type="text" name="search" id="search" 
@@ -141,35 +157,31 @@
                             </div>
                         </div>
 
-                        <div class="sm:col-span-2">
+                        <div>
                             <label for="tanggal_awal" class="block text-sm font-medium text-gray-700">Tanggal Awal</label>
                             <div class="mt-1">
                                 <input type="date" name="tanggal_awal" id="tanggal_awal" 
                                        value="<?= $tanggal_awal ?>"
+                                       onchange="this.form.submit()"
                                        class="shadow-sm focus:ring-warehouse-500 focus:border-warehouse-500 block w-full sm:text-sm border-gray-300 rounded-md">
                             </div>
                         </div>
 
-                        <div class="sm:col-span-2">
+                        <div>
                             <label for="tanggal_akhir" class="block text-sm font-medium text-gray-700">Tanggal Akhir</label>
                             <div class="mt-1">
                                 <input type="date" name="tanggal_akhir" id="tanggal_akhir" 
                                        value="<?= $tanggal_akhir ?>"
+                                       onchange="this.form.submit()"
                                        class="shadow-sm focus:ring-warehouse-500 focus:border-warehouse-500 block w-full sm:text-sm border-gray-300 rounded-md">
                             </div>
-            </div>
-        </div>
-
-                    <div class="mt-4 flex justify-end">
-                        <a href="<?= site_url('dashboard') ?>" 
-                           class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-warehouse-500 mr-2">
-                            Reset
-                        </a>
-                        <button type="submit" 
-                                class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-warehouse-400 hover:bg-warehouse-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-warehouse-500">
-                            Filter
-                        </button>
+                        </div>
                     </div>
+
+                    <!-- Menyimpan nilai tipe jika ada -->
+                    <?php if (isset($_GET['tipe'])): ?>
+                    <input type="hidden" name="tipe" value="<?= $_GET['tipe'] ?>">
+                    <?php endif; ?>
                 </form>
 
                 <!-- Table -->

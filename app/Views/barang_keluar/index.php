@@ -159,16 +159,16 @@
                                     </td>
                                     <td class="px-4 sm:px-6 py-4 whitespace-nowrap text-right text-sm font-medium" data-label="Aksi">
                                         <?php if (session()->get('role') === 'admin'): ?>
-                                            <a href="<?= site_url('barang-keluar/edit/' . $item['id']) ?>" 
-                                               class="text-warehouse-600 hover:text-warehouse-900 mr-3">Edit</a>
-                                            <form action="<?= site_url('barang-keluar/delete/' . $item['id']) ?>" method="post" class="inline">
-                                                <?= csrf_field() ?>
-                                                <button type="submit" 
-                                                        class="text-red-600 hover:text-red-900" 
-                                                        onclick="return confirm('Yakin ingin menghapus?')">
-                                                    Hapus
-                                                </button>
-                                            </form>
+                                        <a href="<?= site_url('barang-keluar/edit/' . $item['id']) ?>" 
+                                           class="text-warehouse-600 hover:text-warehouse-900 mr-3">Edit</a>
+                                        <form action="<?= site_url('barang-keluar/delete/' . $item['id']) ?>" method="post" class="inline">
+                                            <?= csrf_field() ?>
+                                            <button type="submit" 
+                                                    class="text-red-600 hover:text-red-900" 
+                                                    onclick="return confirm('Yakin ingin menghapus?')">
+                                                Hapus
+                                            </button>
+                                        </form>
                                         <?php endif; ?>
                                     </td>
                                 </tr>

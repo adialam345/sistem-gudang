@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title><?= $title ?? 'Sistem Gudang' ?></title>
+    <title><?= $title ?? 'AminsGudang' ?></title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script>
@@ -11,17 +11,29 @@
             theme: {
                 extend: {
                     colors: {
-                        warehouse: {
-                            50: '#FFF9E5',
-                            100: '#FFF2CC',
-                            200: '#FFE699',
-                            300: '#FFD966',
-                            400: '#FFC933',
-                            500: '#FFB800',
-                            600: '#CC9200',
-                            700: '#996D00',
-                            800: '#664800',
-                            900: '#332400',
+                        primary: {
+                            50: '#E6E7F0',
+                            100: '#C4C6DC',
+                            200: '#9EA2C7',
+                            300: '#777DB1',
+                            400: '#4F569B',
+                            500: '#09186C', // Main Blue
+                            600: '#081661',
+                            700: '#061356',
+                            800: '#040F4B',
+                            900: '#020C40',
+                        },
+                        secondary: {
+                            50: '#FFF8E5',
+                            100: '#FEEFC3',
+                            200: '#FDE59D',
+                            300: '#FCDB77',
+                            400: '#FBD152',
+                            500: '#FAAA00', // Main Yellow
+                            600: '#E69D00',
+                            700: '#CC8B00',
+                            800: '#B37A00',
+                            900: '#996800',
                         },
                     },
                     fontFamily: {
@@ -60,12 +72,12 @@
             border-radius: 6px;
         }
         ::-webkit-scrollbar-thumb {
-            background: #FFB800;
+            background: #09186C;
             border-radius: 6px;
             border: 3px solid #f1f1f1;
         }
         ::-webkit-scrollbar-thumb:hover {
-            background: #CC9200;
+            background: #061356;
         }
 
         /* Increased text contrast and readability */
@@ -81,18 +93,18 @@
         
         /* Better focus indicators */
         *:focus {
-            outline: 3px solid #FFB800 !important;
+            outline: 3px solid #FAAA00 !important;
             outline-offset: 2px !important;
         }
 
         /* Improved button contrast */
         .btn-primary {
-            background-color: #FFB800 !important;
-            color: #1a1a1a !important;
+            background-color: #09186C !important;
+            color: #FFFFFF !important;
             font-weight: 600 !important;
         }
         .btn-primary:hover {
-            background-color: #CC9200 !important;
+            background-color: #061356 !important;
         }
 
         /* Enhanced form controls */
@@ -110,8 +122,8 @@
             max-width: 100%;
         }
         th {
-            background-color: #FFF9E5 !important;
-            color: #1a1a1a !important;
+            background-color: #E6E7F0 !important;
+            color: #09186C !important;
             font-weight: 600 !important;
             text-transform: none !important;
             font-size: 16px !important;
@@ -123,31 +135,31 @@
             word-break: break-word;
         }
         tr:nth-child(even) {
-            background-color: #FFF9E5;
+            background-color: #F8F9FF;
         }
 
         /* Ensure text contrast on yellow backgrounds */
-        [class*="bg-warehouse-"] {
+        [class*="bg-primary-"] {
             color: #1a1a1a !important;
         }
         
         /* Exception for primary buttons */
-        .bg-warehouse-500, 
-        .bg-warehouse-600,
-        .hover\:bg-warehouse-500:hover,
-        .hover\:bg-warehouse-600:hover {
+        .bg-primary-500, 
+        .bg-primary-600,
+        .hover\:bg-primary-500:hover,
+        .hover\:bg-primary-600:hover {
             color: #1a1a1a !important;
         }
 
         /* Fix navigation text colors */
-        .text-warehouse-500 {
-            color: #996D00 !important;
+        .text-primary-500 {
+            color: #09186C !important;
         }
-        .hover\:text-warehouse-500:hover {
-            color: #996D00 !important;
+        .hover\:text-primary-500:hover {
+            color: #09186C !important;
         }
-        .border-warehouse-500 {
-            border-color: #996D00 !important;
+        .border-primary-500 {
+            border-color: #09186C !important;
         }
 
         /* Responsive table */
@@ -372,47 +384,67 @@
 </head>
 <body class="bg-gray-50 min-h-screen font-sans">
     <!-- Top Navigation -->
-    <nav class="navbar-fixed shadow-lg border-b border-gray-200">
+    <nav class="navbar-fixed shadow-lg border-b border-gray-200 bg-white">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full">
             <div class="flex justify-between items-center h-full">
                 <div class="flex">
                     <div class="flex-shrink-0 flex items-center">
-                        <span class="text-2xl font-bold text-warehouse-500">SisGudang</span>
+                        <span class="text-2xl font-bold">
+                            <span class="text-primary-500">Amins</span><span class="text-secondary-500">Gudang</span>
+                        </span>
                     </div>
+                    <!-- Navigation Menu -->
                     <div class="hidden sm:ml-8 sm:flex sm:space-x-8">
                         <a href="<?= site_url('dashboard') ?>" 
-                           class="<?= current_url() == site_url('dashboard') ? 'border-warehouse-500 text-warehouse-500' : 'border-transparent text-gray-700' ?> hover:text-warehouse-500 inline-flex items-center px-2 pt-1 border-b-4 text-base font-medium transition-colors duration-200">
+                           class="<?= current_url() == site_url('dashboard') ? 'text-secondary-500 after:w-full after:bg-secondary-500' : 'text-gray-700' ?> group relative inline-flex items-center px-2 pt-1 text-base font-medium transition-all duration-200 hover:bg-gradient-to-r hover:from-primary-500 hover:to-secondary-500 hover:bg-clip-text hover:text-transparent after:absolute after:bottom-0 after:left-0 after:h-0.5 after:w-0 after:transition-all after:duration-300 after:ease-out hover:after:w-full hover:after:bg-gradient-to-r hover:after:from-primary-500 hover:after:to-secondary-500">
                             Dashboard
                         </a>
                         <a href="<?= site_url('barang') ?>"
-                           class="<?= current_url() == site_url('barang') ? 'border-warehouse-500 text-warehouse-500' : 'border-transparent text-gray-700' ?> hover:text-warehouse-500 inline-flex items-center px-2 pt-1 border-b-4 text-base font-medium transition-colors duration-200">
+                           class="<?= current_url() == site_url('barang') ? 'text-secondary-500 after:w-full after:bg-secondary-500' : 'text-gray-700' ?> group relative inline-flex items-center px-2 pt-1 text-base font-medium transition-all duration-200 hover:bg-gradient-to-r hover:from-primary-500 hover:to-secondary-500 hover:bg-clip-text hover:text-transparent after:absolute after:bottom-0 after:left-0 after:h-0.5 after:w-0 after:transition-all after:duration-300 after:ease-out hover:after:w-full hover:after:bg-gradient-to-r hover:after:from-primary-500 hover:after:to-secondary-500">
                             Barang
                         </a>
                         <a href="<?= site_url('barang-masuk') ?>"
-                           class="<?= current_url() == site_url('barang-masuk') ? 'border-warehouse-500 text-warehouse-500' : 'border-transparent text-gray-700' ?> hover:text-warehouse-500 inline-flex items-center px-2 pt-1 border-b-4 text-base font-medium transition-colors duration-200">
+                           class="<?= current_url() == site_url('barang-masuk') ? 'text-secondary-500 after:w-full after:bg-secondary-500' : 'text-gray-700' ?> group relative inline-flex items-center px-2 pt-1 text-base font-medium transition-all duration-200 hover:bg-gradient-to-r hover:from-primary-500 hover:to-secondary-500 hover:bg-clip-text hover:text-transparent after:absolute after:bottom-0 after:left-0 after:h-0.5 after:w-0 after:transition-all after:duration-300 after:ease-out hover:after:w-full hover:after:bg-gradient-to-r hover:after:from-primary-500 hover:after:to-secondary-500">
                             Barang Masuk
                         </a>
                         <a href="<?= site_url('barang-keluar') ?>"
-                           class="<?= current_url() == site_url('barang-keluar') ? 'border-warehouse-500 text-warehouse-500' : 'border-transparent text-gray-700' ?> hover:text-warehouse-500 inline-flex items-center px-2 pt-1 border-b-4 text-base font-medium transition-colors duration-200">
+                           class="<?= current_url() == site_url('barang-keluar') ? 'text-secondary-500 after:w-full after:bg-secondary-500' : 'text-gray-700' ?> group relative inline-flex items-center px-2 pt-1 text-base font-medium transition-all duration-200 hover:bg-gradient-to-r hover:from-primary-500 hover:to-secondary-500 hover:bg-clip-text hover:text-transparent after:absolute after:bottom-0 after:left-0 after:h-0.5 after:w-0 after:transition-all after:duration-300 after:ease-out hover:after:w-full hover:after:bg-gradient-to-r hover:after:from-primary-500 hover:after:to-secondary-500">
                             Barang Keluar
                         </a>
                     </div>
                 </div>
                 <div class="hidden sm:ml-6 sm:flex sm:items-center">
-                    <div class="ml-3 relative">
-                        <div class="flex items-center space-x-4">
-                            <span class="text-gray-700 text-base"><?= session()->get('user_name') ?></span>
-                            <a href="<?= site_url('logout') ?>" 
-                               class="btn-primary px-4 py-2 rounded-lg text-base transition-colors duration-200">
-                                Logout
-                            </a>
+                    <div class="ml-3 relative flex items-center space-x-4">
+                        <!-- User Profile -->
+                        <div class="flex items-center space-x-3">
+                            <!-- Profile Vector -->
+                            <div class="h-10 w-10 rounded-full bg-primary-100 flex items-center justify-center transform transition-transform duration-200 hover:scale-110">
+                                <svg class="h-6 w-6 text-primary-600" fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                                </svg>
+                            </div>
+                            <!-- User Info -->
+                            <div class="flex flex-col">
+                                <span class="text-m font-semibold text-primary-600"><?= session()->get('name') ?></span>
+                                <span class="text-xs font-medium text-secondary-500"><?= ucfirst(session()->get('role')) ?></span>
+                            </div>
                         </div>
+                        <div class="h-6 w-px bg-gray-200"></div>
+                        <!-- Logout Button with Icon -->
+                        <a href="<?= site_url('logout') ?>" 
+                           class="group inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-primary-500 hover:bg-primary-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-all duration-200 hover:shadow-lg transform hover:-translate-y-0.5">
+                            <svg class="w-5 h-5 mr-1.5 transition-transform duration-200 group-hover:rotate-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+                            </svg>
+                            <span class="text-white font-semibold">Logout</span>
+                        </a>
                     </div>
                 </div>
+
                 <!-- Mobile menu button -->
                 <div class="flex items-center sm:hidden">
                     <button type="button" 
-                            class="inline-flex items-center justify-center p-3 rounded-lg text-gray-700 hover:text-warehouse-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-warehouse-500 transition-colors duration-200"
+                            class="inline-flex items-center justify-center p-3 rounded-lg text-gray-700 hover:text-primary-500 hover:bg-primary-50 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary-500 transition-all duration-200 hover:shadow-md"
                             onclick="document.getElementById('mobile-menu').classList.toggle('hidden')">
                         <span class="sr-only">Open main menu</span>
                         <svg class="h-8 w-8" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -427,31 +459,45 @@
         <div class="hidden sm:hidden" id="mobile-menu">
             <div class="pt-2 pb-3 space-y-1">
                 <a href="<?= site_url('dashboard') ?>" 
-                   class="<?= current_url() == site_url('dashboard') ? 'bg-warehouse-50 text-warehouse-500' : 'text-gray-700' ?> block pl-3 pr-4 py-4 text-base font-medium hover:bg-warehouse-50 hover:text-warehouse-500 transition-colors duration-200">
+                   class="<?= current_url() == site_url('dashboard') ? 'bg-gradient-to-r from-primary-500 to-secondary-500 text-white' : 'text-gray-700 hover:bg-gradient-to-r hover:from-primary-50 hover:to-secondary-50 hover:text-primary-500' ?> block pl-3 pr-4 py-4 text-base font-medium transition-all duration-200">
                     Dashboard
                 </a>
                 <a href="<?= site_url('barang') ?>"
-                   class="<?= current_url() == site_url('barang') ? 'bg-warehouse-50 text-warehouse-500' : 'text-gray-700' ?> block pl-3 pr-4 py-4 text-base font-medium hover:bg-warehouse-50 hover:text-warehouse-500 transition-colors duration-200">
+                   class="<?= current_url() == site_url('barang') ? 'bg-gradient-to-r from-primary-500 to-secondary-500 text-white' : 'text-gray-700 hover:bg-gradient-to-r hover:from-primary-50 hover:to-secondary-50 hover:text-primary-500' ?> block pl-3 pr-4 py-4 text-base font-medium transition-all duration-200">
                     Barang
                 </a>
                 <a href="<?= site_url('barang-masuk') ?>"
-                   class="<?= current_url() == site_url('barang-masuk') ? 'bg-warehouse-50 text-warehouse-500' : 'text-gray-700' ?> block pl-3 pr-4 py-4 text-base font-medium hover:bg-warehouse-50 hover:text-warehouse-500 transition-colors duration-200">
+                   class="<?= current_url() == site_url('barang-masuk') ? 'bg-gradient-to-r from-primary-500 to-secondary-500 text-white' : 'text-gray-700 hover:bg-gradient-to-r hover:from-primary-50 hover:to-secondary-50 hover:text-primary-500' ?> block pl-3 pr-4 py-4 text-base font-medium transition-all duration-200">
                     Barang Masuk
                 </a>
                 <a href="<?= site_url('barang-keluar') ?>"
-                   class="<?= current_url() == site_url('barang-keluar') ? 'bg-warehouse-50 text-warehouse-500' : 'text-gray-700' ?> block pl-3 pr-4 py-4 text-base font-medium hover:bg-warehouse-50 hover:text-warehouse-500 transition-colors duration-200">
+                   class="<?= current_url() == site_url('barang-keluar') ? 'bg-gradient-to-r from-primary-500 to-secondary-500 text-white' : 'text-gray-700 hover:bg-gradient-to-r hover:from-primary-50 hover:to-secondary-50 hover:text-primary-500' ?> block pl-3 pr-4 py-4 text-base font-medium transition-all duration-200">
                     Barang Keluar
                 </a>
                 <div class="pt-4 pb-3 border-t border-gray-200">
                     <div class="flex items-center px-4 py-4">
-                        <div class="flex-shrink-0">
-                            <span class="text-gray-700 text-base"><?= session()->get('user_name') ?></span>
+                        <!-- User Profile Mobile -->
+                        <div class="flex items-center space-x-3">
+                            <!-- Profile Vector Mobile -->
+                            <div class="h-10 w-10 rounded-full bg-primary-100 flex items-center justify-center">
+                                <svg class="h-6 w-6 text-primary-600" fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                                </svg>
+                            </div>
+                            <!-- User Info Mobile -->
+                            <div class="flex flex-col">
+                                <span class="text-sm font-semibold text-gray-900"><?= session()->get('username') ?></span>
+                                <span class="text-xs font-medium text-primary-600"><?= ucfirst(session()->get('role')) ?></span>
+                            </div>
                         </div>
                     </div>
                     <div class="mt-3 px-2">
                         <a href="<?= site_url('logout') ?>"
-                           class="btn-primary block px-4 py-2 rounded-lg text-center text-base transition-colors duration-200">
-                            Logout
+                           class="group inline-flex items-center justify-center w-full px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-primary-500 hover:bg-primary-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-all duration-200 hover:shadow-lg">
+                            <svg class="w-5 h-5 mr-1.5 transition-transform duration-200 group-hover:rotate-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+                            </svg>
+                            <span class="text-white font-semibold">Logout</span>
                         </a>
                     </div>
                 </div>
@@ -467,7 +513,7 @@
     <!-- Footer -->
     <footer class="bg-white border-t border-gray-200 mt-auto">
         <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-            <p class="text-center text-gray-700 text-base">&copy; <?= date('Y') ?> Sistem Gudang. All rights reserved.</p>
+            <p class="text-center text-gray-700 text-base">&copy; <?= date('Y') ?> AminsGudang. All rights reserved.</p>
         </div>
     </footer>
 </body>

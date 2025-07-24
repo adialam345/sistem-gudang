@@ -38,50 +38,42 @@ class Dashboard extends BaseController
     private function getAktivitasTerbaru($search = null, $tanggal_awal = null, $tanggal_akhir = null)
     {
         $db = \Config\Database::connect();
+        $tipe = $this->request->getGet('tipe');
 
-        // Base queries
-        $barangMasukQuery = $db->table('barang_masuk')
-            ->select("'masuk' as tipe, tanggal, no_transaksi, kode_barang, nama_barang, jumlah, satuan");
+        // Gabungkan query barang masuk dan keluar dengan UNION
+        $sql = "";
         
-        $barangKeluarQuery = $db->table('barang_keluar')
-            ->select("'keluar' as tipe, tanggal, no_transaksi, kode_barang, nama_barang, jumlah, satuan");
-
-        // Apply search filter if provided
-        if ($search) {
-            $barangMasukQuery->groupStart()
-                ->like('kode_barang', $search)
-                ->orLike('nama_barang', $search)
-                ->orLike('no_transaksi', $search)
-                ->groupEnd();
-
-            $barangKeluarQuery->groupStart()
-                ->like('kode_barang', $search)
-                ->orLike('nama_barang', $search)
-                ->orLike('no_transaksi', $search)
-                ->groupEnd();
+        // Jika tipe tidak diset atau 'masuk', tambahkan query barang masuk
+        if (!$tipe || $tipe === 'masuk') {
+            $sql .= "SELECT 'masuk' as tipe, tanggal, no_transaksi, kode_barang, nama_barang, jumlah, satuan FROM barang_masuk ";
+            
+            if ($search) {
+                $sql .= "WHERE (kode_barang LIKE '%{$search}%' OR nama_barang LIKE '%{$search}%' OR no_transaksi LIKE '%{$search}%') ";
+            }
+            if ($tanggal_awal && $tanggal_akhir) {
+                $sql .= ($search ? "AND" : "WHERE") . " (tanggal >= '{$tanggal_awal}' AND tanggal <= '{$tanggal_akhir}') ";
+            }
         }
 
-        // Apply date range filter if provided
-        if ($tanggal_awal && $tanggal_akhir) {
-            $barangMasukQuery->where('tanggal >=', $tanggal_awal)
-                ->where('tanggal <=', $tanggal_akhir);
+        // Jika tipe tidak diset atau 'keluar', tambahkan query barang keluar
+        if (!$tipe || $tipe === 'keluar') {
+            if ($sql) {
+                $sql .= "UNION ALL ";
+            }
+            $sql .= "SELECT 'keluar' as tipe, tanggal, no_transaksi, kode_barang, nama_barang, jumlah, satuan FROM barang_keluar ";
 
-            $barangKeluarQuery->where('tanggal >=', $tanggal_awal)
-                ->where('tanggal <=', $tanggal_akhir);
+            if ($search) {
+                $sql .= "WHERE (kode_barang LIKE '%{$search}%' OR nama_barang LIKE '%{$search}%' OR no_transaksi LIKE '%{$search}%') ";
+            }
+            if ($tanggal_awal && $tanggal_akhir) {
+                $sql .= ($search ? "AND" : "WHERE") . " (tanggal >= '{$tanggal_awal}' AND tanggal <= '{$tanggal_akhir}') ";
+            }
         }
 
-        // Get results
-        $barangMasuk = $barangMasukQuery->get()->getResultArray();
-        $barangKeluar = $barangKeluarQuery->get()->getResultArray();
+        // Urutkan berdasarkan tanggal terbaru
+        $sql .= "ORDER BY tanggal DESC, no_transaksi DESC LIMIT 10";
 
-        // Combine and sort the results
-        $aktivitas = array_merge($barangMasuk, $barangKeluar);
-        usort($aktivitas, function($a, $b) {
-            return strtotime($b['tanggal']) - strtotime($a['tanggal']);
-        });
-
-        // Get only the latest 10 records
-        return array_slice($aktivitas, 0, 10);
+        return $db->query($sql)->getResultArray();
     }
 
     public function exportAktivitasPdf()
