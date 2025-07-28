@@ -64,6 +64,16 @@
                                    class="shadow-sm focus:ring-yellow-500 focus:border-yellow-500 block w-full sm:text-sm border-gray-300 rounded-lg">
                         </div>
                     </div>
+                    <div>
+                        <label for="sort_date" class="block text-sm font-medium text-gray-700">Urutan</label>
+                        <div class="mt-1">
+                            <select name="sort_date" id="sort_date" 
+                                    class="shadow-sm focus:ring-yellow-500 focus:border-yellow-500 block w-full sm:text-sm border-gray-300 rounded-lg">
+                                <option value="desc" <?= ($sort_date ?? 'desc') == 'desc' ? 'selected' : '' ?>>Terbaru</option>
+                                <option value="asc" <?= ($sort_date ?? '') == 'asc' ? 'selected' : '' ?>>Terlama</option>
+                            </select>
+                        </div>
+                    </div>
                     <div class="flex items-end">
                         <button type="submit" 
                                 class="w-full inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-yellow-500 hover:bg-yellow-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500 transition-colors duration-200">
@@ -85,14 +95,14 @@
             <h2 class="text-xl font-semibold text-gray-900">Daftar Barang Masuk</h2>
                 <div class="flex space-x-2">
                     <a href="<?= site_url('barang-masuk/export-excel') . '?' . http_build_query($_GET) ?>" 
-                       class="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-yellow-600 hover:bg-yellow-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500">
+                       class="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
                         <svg class="-ml-1 mr-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                         </svg>
                         Excel
                     </a>
                     <a href="<?= site_url('barang-masuk/export-pdf') . '?' . http_build_query($_GET) ?>" 
-                       class="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-yellow-600 hover:bg-yellow-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500">
+                       class="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
                         <svg class="-ml-1 mr-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                         </svg>
@@ -163,21 +173,21 @@
                                     </td>
                                     <td class="px-4 sm:px-6 py-4 text-sm text-gray-900" data-label="Aksi">
                                         <div class="flex items-center space-x-2">
-                                            <a href="<?= site_url('barang-masuk/edit/' . $item['id']) ?>" 
-                                               class="text-blue-600 hover:text-blue-900">
+                                        <a href="<?= site_url('barang-masuk/edit/' . $item['id']) ?>" 
+                                           class="text-blue-600 hover:text-blue-900">
                                                 <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                                                </svg>
-                                            </a>
-                                            <form action="<?= site_url('barang-masuk/delete/' . $item['id']) ?>" method="post" class="inline" 
+                                            </svg>
+                                        </a>
+                                        <form action="<?= site_url('barang-masuk/delete/' . $item['id']) ?>" method="post" class="inline" 
                                                   onsubmit="return confirm('Apakah Anda yakin ingin menghapus data ini?');">
-                                                <?= csrf_field() ?>
-                                                <button type="submit" class="text-red-600 hover:text-red-900">
+                                            <?= csrf_field() ?>
+                                            <button type="submit" class="text-red-600 hover:text-red-900">
                                                     <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                                    </svg>
-                                                </button>
-                                            </form>
+                                                </svg>
+                                            </button>
+                                        </form>
                                         </div>
                                     </td>
                                 </tr>

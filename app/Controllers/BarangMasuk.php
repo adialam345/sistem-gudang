@@ -48,35 +48,52 @@ class BarangMasuk extends BaseController
         $search = $this->request->getGet('search');
         $tanggal_awal = $this->request->getGet('tanggal_awal');
         $tanggal_akhir = $this->request->getGet('tanggal_akhir');
+        $sort_date = $this->request->getGet('sort_date') ?? 'desc';
 
-        $query = $this->barangMasukModel;
+        $db = \Config\Database::connect();
+        $builder = $db->table('barang_masuk bm');
+        $builder->select('bm.*, b.nama as nama_barang, b.kode as kode_barang')
+                ->join('barang b', 'b.id = bm.barang_id');
 
+        // Filter pencarian
         if ($search) {
-            $query->groupStart()
-                  ->like('no_transaksi', $search)
-                  ->orLike('kode_barang', $search)
-                  ->orLike('nama_barang', $search)
-                  ->groupEnd();
+            $builder->groupStart()
+                    ->like('bm.no_transaksi', $search)
+                    ->orLike('b.kode', $search)
+                    ->orLike('b.nama', $search)
+                    ->orLike('bm.supplier', $search)
+                    ->groupEnd();
         }
 
+        // Filter tanggal
         if ($tanggal_awal && $tanggal_akhir) {
-            $query->where('tanggal >=', $tanggal_awal)
-                  ->where('tanggal <=', $tanggal_akhir);
-        } elseif ($tanggal_awal) {
-            $query->where('tanggal >=', $tanggal_awal);
-        } elseif ($tanggal_akhir) {
-            $query->where('tanggal <=', $tanggal_akhir);
+            $builder->where('DATE(bm.tanggal) >=', $tanggal_awal)
+                   ->where('DATE(bm.tanggal) <=', $tanggal_akhir);
         }
+
+        // Pengurutan
+        $builder->orderBy('bm.tanggal', $sort_date)
+                ->orderBy('bm.no_transaksi', $sort_date);
+
+        // Pagination
+        $page = $this->request->getGet('page') ?? 1;
+        $perPage = 10;
+        $total = $builder->countAllResults(false);
+        $items = $builder->get($perPage, ($page - 1) * $perPage)->getResultArray();
+
+        // Create Pager
+        $pager = service('pager');
+        $pager->setPath('barang-masuk');
+        $pager->makeLinks($page, $perPage, $total);
 
         $data = [
             'title' => 'Barang Masuk',
-            'barangMasuk' => $query->orderBy('tanggal', 'DESC')
-                                  ->orderBy('no_transaksi', 'DESC')
-                                  ->paginate(10),
-            'pager' => $query->pager,
+            'barangMasuk' => $items,
+            'pager' => $pager,
             'search' => $search,
             'tanggal_awal' => $tanggal_awal,
-            'tanggal_akhir' => $tanggal_akhir
+            'tanggal_akhir' => $tanggal_akhir,
+            'sort_date' => $sort_date
         ];
 
         return view('barang_masuk/index', $data);

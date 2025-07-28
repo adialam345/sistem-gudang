@@ -67,65 +67,70 @@ class Barang extends BaseController
     public function index()
     {
         $search = $this->request->getGet('search');
-        $kategori = $this->request->getGet('kategori');
+        $selectedCategory = $this->request->getGet('kategori');
         $sort = $this->request->getGet('sort');
 
-        $query = $this->barangModel;
+        $db = \Config\Database::connect();
+        $builder = $db->table('barang b');
+        $builder->select('b.*, COALESCE(k.nama, "-") as kategori')
+                ->join('kategori k', 'k.id = b.kategori_id', 'left');
 
+        // Filter pencarian
         if ($search) {
-            $query->groupStart()
-                  ->like('kode', $search)
-                  ->orLike('nama', $search)
-                  ->groupEnd();
+            $builder->groupStart()
+                    ->like('b.kode', $search)
+                    ->orLike('b.nama', $search)
+                    ->orLike('b.deskripsi', $search)
+                    ->orLike('k.nama', $search)
+                    ->groupEnd();
         }
 
-        if ($kategori) {
-            $query->where('kategori_id', $kategori);
+        // Filter kategori
+        if ($selectedCategory) {
+            $builder->where('b.kategori_id', $selectedCategory);
         }
 
+        // Pengurutan
         if ($sort) {
             switch ($sort) {
                 case 'nama_asc':
-                    $query->orderBy('nama', 'ASC');
+                    $builder->orderBy('b.nama', 'ASC');
                     break;
                 case 'nama_desc':
-                    $query->orderBy('nama', 'DESC');
+                    $builder->orderBy('b.nama', 'DESC');
                     break;
                 case 'stok_asc':
-                    $query->orderBy('stok', 'ASC');
+                    $builder->orderBy('b.stok', 'ASC');
                     break;
                 case 'stok_desc':
-                    $query->orderBy('stok', 'DESC');
+                    $builder->orderBy('b.stok', 'DESC');
                     break;
                 default:
-                    $query->orderBy('nama', 'ASC');
+                    $builder->orderBy('b.nama', 'ASC');
             }
         } else {
-            $query->orderBy('nama', 'ASC');
+            $builder->orderBy('b.nama', 'ASC');
         }
 
-        $categories = $this->barangModel->getCategories();
-        $barang = $query->paginate(10);
+        // Pagination
+        $page = $this->request->getGet('page') ?? 1;
+        $perPage = 10;
+        $total = $builder->countAllResults(false);
+        $items = $builder->get($perPage, ($page - 1) * $perPage)->getResultArray();
 
-        // Get category names and stock info
-        foreach ($barang as &$item) {
-            // Get category name
-            foreach ($categories as $cat) {
-                if ($cat['id'] == $item['kategori_id']) {
-                    $item['kategori'] = $cat['nama'];
-                    break;
-                }
-            }
-        }
+        // Create Pager
+        $pager = service('pager');
+        $pager->setPath('barang');
+        $pager->makeLinks($page, $perPage, $total);
 
         $data = [
-            'title' => 'Daftar Barang',
-            'barang' => $barang,
-            'pager' => $query->pager,
+            'title' => 'Data Barang',
+            'barang' => $items,
+            'pager' => $pager,
             'search' => $search,
-            'selectedCategory' => $kategori,
+            'selectedCategory' => $selectedCategory,
             'sort' => $sort,
-            'categories' => $categories
+            'categories' => $this->db->table('kategori')->get()->getResultArray()
         ];
 
         return view('barang/index', $data);
@@ -386,6 +391,7 @@ class Barang extends BaseController
                         'nama_barang' => $barang['nama'],
                         'jumlah' => abs($selisih),
                         'satuan' => $barang['satuan'],
+                        'harga' => $barang['harga'],
                         'supplier' => 'Penyesuaian stok',
                         'keterangan' => 'Penyesuaian stok manual'
                     ];
@@ -404,6 +410,7 @@ class Barang extends BaseController
                         'nama_barang' => $barang['nama'],
                         'jumlah' => abs($selisih),
                         'satuan' => $barang['satuan'],
+                        'harga' => $barang['harga'],
                         'tujuan' => 'Penyesuaian stok',
                         'keterangan' => 'Penyesuaian stok manual'
                     ];
@@ -468,6 +475,104 @@ class Barang extends BaseController
             } else {
                 return redirect()->back()->with('error', 'Gagal menyinkronkan stok: ' . $e->getMessage());
             }
+        }
+    }
+
+    public function adjustStock()
+    {
+        $rules = [
+            'barang_id' => 'required|numeric',
+            'adjustment_type' => 'required|in_list[add,subtract]',
+            'adjustment_amount' => 'required|numeric|greater_than[0]',
+            'keterangan' => 'required'
+        ];
+
+        if (!$this->validate($rules)) {
+            return redirect()->back()->withInput()
+                           ->with('error', 'Validasi gagal: ' . implode(', ', $this->validator->getErrors()));
+        }
+
+        $barangId = $this->request->getPost('barang_id');
+        $adjustmentType = $this->request->getPost('adjustment_type');
+        $adjustmentAmount = (int)$this->request->getPost('adjustment_amount');
+        $keterangan = $this->request->getPost('keterangan');
+
+        $barang = $this->barangModel->find($barangId);
+        if (!$barang) {
+            return redirect()->back()->with('error', 'Barang tidak ditemukan');
+        }
+
+        $this->db->transStart();
+
+        try {
+            $tanggal = date('Y-m-d');
+            $stokLama = $barang['stok'];
+            
+            if ($adjustmentType === 'add') {
+                // Stok bertambah -> catat di barang masuk
+                $noTransaksi = sprintf("BM/%s/ADJ%03d", date('Ymd'), rand(1, 999));
+                $data = [
+                    'tanggal' => $tanggal,
+                    'no_transaksi' => $noTransaksi,
+                    'barang_id' => $barang['id'],
+                    'kode_barang' => $barang['kode'],
+                    'nama_barang' => $barang['nama'],
+                    'jumlah' => $adjustmentAmount,
+                    'satuan' => $barang['satuan'],
+                    'harga' => $barang['harga'],
+                    'supplier' => 'Penyesuaian Manual',
+                    'keterangan' => $keterangan
+                ];
+                
+                if (!$this->barangMasukModel->insert($data)) {
+                    throw new \Exception('Gagal mencatat barang masuk');
+                }
+
+                $stokBaru = $stokLama + $adjustmentAmount;
+            } else {
+                // Stok berkurang -> catat di barang keluar
+                if ($adjustmentAmount > $stokLama) {
+                    return redirect()->back()->with('error', 'Jumlah pengurangan melebihi stok yang tersedia');
+                }
+
+                $noTransaksi = sprintf("BK/%s/ADJ%03d", date('Ymd'), rand(1, 999));
+                $data = [
+                    'tanggal' => $tanggal,
+                    'no_transaksi' => $noTransaksi,
+                    'barang_id' => $barang['id'],
+                    'kode_barang' => $barang['kode'],
+                    'nama_barang' => $barang['nama'],
+                    'jumlah' => $adjustmentAmount,
+                    'satuan' => $barang['satuan'],
+                    'harga' => $barang['harga'],
+                    'tujuan' => 'Penyesuaian Manual',
+                    'keterangan' => $keterangan
+                ];
+                
+                if (!$this->barangKeluarModel->insert($data)) {
+                    throw new \Exception('Gagal mencatat barang keluar');
+                }
+
+                $stokBaru = $stokLama - $adjustmentAmount;
+            }
+
+            // Update stok di tabel barang
+            if (!$this->barangModel->update($barangId, ['stok' => $stokBaru])) {
+                throw new \Exception('Gagal mengupdate stok barang');
+            }
+            
+            $this->db->transComplete();
+
+            if ($this->db->transStatus() === false) {
+                throw new \Exception('Transaksi database gagal');
+            }
+
+            return redirect()->back()->with('success', 'Stok berhasil disesuaikan');
+
+        } catch (\Exception $e) {
+            $this->db->transRollback();
+            log_message('error', 'Error adjusting stock: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Gagal menyesuaikan stok: ' . $e->getMessage());
         }
     }
 } 

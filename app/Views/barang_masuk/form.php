@@ -136,29 +136,30 @@
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     // Tom Select for barang dropdown
-    new TomSelect('#barang_id', {
+    const tomSelect = new TomSelect('#barang_id', {
         create: false,
         sortField: {
             field: 'text',
             direction: 'asc'
         },
-        placeholder: 'Cari atau pilih barang...'
+        placeholder: 'Cari atau pilih barang...',
+        onChange: function() {
+            updateBarangInfo();
+        }
     });
 
     // Satuan and price update
     const barangSelect = document.getElementById('barang_id');
-    const satuanAddon = document.getElementById('satuan-addon');
     const hargaInput = document.getElementById('harga');
     
     function updateBarangInfo() {
         const selectedOption = barangSelect.options[barangSelect.selectedIndex];
-        if (selectedOption) {
-            satuanAddon.textContent = selectedOption.dataset.satuan || '';
+        if (selectedOption && selectedOption.value) {
             hargaInput.value = selectedOption.dataset.harga || 0;
         }
     }
     
-    barangSelect.addEventListener('change', updateBarangInfo);
+    // Initial update
     updateBarangInfo();
 });
 </script>

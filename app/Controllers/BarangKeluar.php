@@ -57,31 +57,52 @@ class BarangKeluar extends BaseController
         $search = $this->request->getGet('search');
         $tanggal_awal = $this->request->getGet('tanggal_awal');
         $tanggal_akhir = $this->request->getGet('tanggal_akhir');
+        $sort_date = $this->request->getGet('sort_date') ?? 'desc';
 
-        $query = $this->barangKeluarModel;
+        $db = \Config\Database::connect();
+        $builder = $db->table('barang_keluar bk');
+        $builder->select('bk.*, b.nama as nama_barang, b.kode as kode_barang')
+                ->join('barang b', 'b.id = bk.barang_id');
 
+        // Filter pencarian
         if ($search) {
-            $query->groupStart()
-                  ->like('kode_barang', $search)
-                  ->orLike('nama_barang', $search)
-                  ->groupEnd();
+            $builder->groupStart()
+                    ->like('bk.no_transaksi', $search)
+                    ->orLike('b.kode', $search)
+                    ->orLike('b.nama', $search)
+                    ->orLike('bk.tujuan', $search)
+                    ->groupEnd();
         }
 
+        // Filter tanggal
         if ($tanggal_awal && $tanggal_akhir) {
-            $query->where('tanggal >=', $tanggal_awal)
-                  ->where('tanggal <=', $tanggal_akhir);
+            $builder->where('DATE(bk.tanggal) >=', $tanggal_awal)
+                   ->where('DATE(bk.tanggal) <=', $tanggal_akhir);
         }
 
-        $query->orderBy('tanggal', 'DESC')
-              ->orderBy('no_transaksi', 'DESC');
+        // Pengurutan
+        $builder->orderBy('bk.tanggal', $sort_date)
+                ->orderBy('bk.no_transaksi', $sort_date);
+
+        // Pagination
+        $page = $this->request->getGet('page') ?? 1;
+        $perPage = 10;
+        $total = $builder->countAllResults(false);
+        $items = $builder->get($perPage, ($page - 1) * $perPage)->getResultArray();
+
+        // Create Pager
+        $pager = service('pager');
+        $pager->setPath('barang-keluar');
+        $pager->makeLinks($page, $perPage, $total);
 
         $data = [
             'title' => 'Barang Keluar',
-            'barangKeluar' => $query->paginate(10),
-            'pager' => $query->pager,
+            'barangKeluar' => $items,
+            'pager' => $pager,
             'search' => $search,
             'tanggal_awal' => $tanggal_awal,
-            'tanggal_akhir' => $tanggal_akhir
+            'tanggal_akhir' => $tanggal_akhir,
+            'sort_date' => $sort_date
         ];
 
         return view('barang_keluar/index', $data);

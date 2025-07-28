@@ -1,6 +1,7 @@
 <?= $this->extend('layouts/main') ?>
 
 <?= $this->section('content') ?>
+<link href="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/css/tom-select.css" rel="stylesheet">
 <div class="space-y-6">
     <!-- Header -->
     <div class="sm:flex sm:items-center sm:justify-between">
@@ -150,38 +151,50 @@
     </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Tom Select for barang dropdown
-    new TomSelect('#barang_id', {
+    const barangSelect = document.getElementById('barang_id');
+    const hargaInput = document.getElementById('harga');
+    const jumlahInput = document.getElementById('jumlah');
+    const kodeBarangInput = document.getElementById('kode_barang');
+    const namaBarangInput = document.getElementById('nama_barang');
+    const satuanInput = document.getElementById('satuan');
+
+    // Function to update barang info
+    function updateBarangInfo(selectedOption) {
+        if (selectedOption && selectedOption.value) {
+            hargaInput.value = selectedOption.dataset.harga || 0;
+            kodeBarangInput.value = selectedOption.dataset.kode || '';
+            namaBarangInput.value = selectedOption.dataset.nama || '';
+            satuanInput.value = selectedOption.dataset.satuan || '';
+        }
+    }
+
+    // Initialize TomSelect
+    const tomSelect = new TomSelect('#barang_id', {
         create: false,
         sortField: {
             field: 'text',
             direction: 'asc'
         },
-        placeholder: 'Cari atau pilih barang...'
+        placeholder: 'Cari atau pilih barang...',
+        onChange: function() {
+            const selectedOption = barangSelect.options[barangSelect.selectedIndex];
+            updateBarangInfo(selectedOption);
+        }
     });
 
-    // Satuan and price update
-    const barangSelect = document.getElementById('barang_id');
-    const satuanAddon = document.getElementById('satuan-addon');
-    const hargaInput = document.getElementById('harga');
-    
-    function updateBarangInfo() {
-        const selectedOption = barangSelect.options[barangSelect.selectedIndex];
-        if (selectedOption) {
-            satuanAddon.textContent = selectedOption.dataset.satuan || '';
-            hargaInput.value = selectedOption.dataset.harga || 0;
-        }
+    // Initial update
+    const selectedOption = barangSelect.options[barangSelect.selectedIndex];
+    if (selectedOption) {
+        updateBarangInfo(selectedOption);
     }
-    
-    barangSelect.addEventListener('change', updateBarangInfo);
-    updateBarangInfo();
 
     // Validasi jumlah tidak melebihi stok
     jumlahInput.addEventListener('input', function() {
         const selectedOption = barangSelect.options[barangSelect.selectedIndex];
-        if (selectedOption.value) {
+        if (selectedOption && selectedOption.value) {
             const stok = parseInt(selectedOption.dataset.stok);
             if (parseInt(this.value) > stok) {
                 this.value = stok;
