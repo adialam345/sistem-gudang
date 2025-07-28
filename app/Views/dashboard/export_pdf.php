@@ -51,9 +51,10 @@
                 <th>No Transaksi</th>
                 <th>Kode Barang</th>
                 <th>Nama Barang</th>
+                <th>Harga</th>
                 <th>Jumlah</th>
                 <th>Satuan</th>
-                <th>Status</th>
+                <th>Tipe</th>
             </tr>
         </thead>
         <tbody>
@@ -63,9 +64,10 @@
                 <td><?= $item['no_transaksi'] ?></td>
                 <td><?= $item['kode_barang'] ?></td>
                 <td><?= $item['nama_barang'] ?></td>
+                <td>Rp <?= number_format($item['harga'], 0, ',', '.') ?></td>
                 <td><?= number_format($item['jumlah']) ?></td>
                 <td><?= $item['satuan'] ?></td>
-                <td class="status-<?= $item['tipe'] ?>"><?= ucfirst($item['tipe']) ?></td>
+                <td><?= ucfirst($item['tipe']) ?></td>
             </tr>
             <?php endforeach; ?>
         </tbody>

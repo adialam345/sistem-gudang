@@ -22,6 +22,48 @@ class Barang extends BaseController
         $this->db = \Config\Database::connect();
     }
 
+    public function addPriceColumn()
+    {
+        try {
+            // Check if column exists
+            $fields = $this->db->getFieldData('barang');
+            $hargaExists = false;
+            foreach ($fields as $field) {
+                if ($field->name === 'harga') {
+                    $hargaExists = true;
+                    break;
+                }
+            }
+
+            if (!$hargaExists) {
+                // Add column if it doesn't exist
+                $sql = "ALTER TABLE barang ADD COLUMN harga DECIMAL(15,2) NOT NULL DEFAULT 0.00 AFTER deskripsi";
+                $this->db->query($sql);
+                
+                // Update existing prices
+                $updates = [
+                    ['kode' => 'BRG001', 'harga' => 75000.00],
+                    ['kode' => 'BRG002', 'harga' => 85000.00],
+                    ['kode' => 'BRG003', 'harga' => 450000.00],
+                    ['kode' => 'BRG004', 'harga' => 25000.00],
+                    ['kode' => 'BRG005', 'harga' => 185000.00]
+                ];
+
+                foreach ($updates as $update) {
+                    $this->db->table('barang')
+                            ->where('kode', $update['kode'])
+                            ->update(['harga' => $update['harga']]);
+                }
+                
+                return redirect()->to('/barang')->with('success', 'Kolom harga berhasil ditambahkan');
+            }
+            
+            return redirect()->to('/barang')->with('info', 'Kolom harga sudah ada');
+        } catch (\Exception $e) {
+            return redirect()->to('/barang')->with('error', 'Gagal menambahkan kolom harga: ' . $e->getMessage());
+        }
+    }
+
     public function index()
     {
         $search = $this->request->getGet('search');
@@ -127,6 +169,14 @@ class Barang extends BaseController
                 'errors' => [
                     'required' => 'Satuan harus dipilih'
                 ]
+            ],
+            'harga' => [
+                'rules' => 'required|numeric|greater_than_equal_to[0]',
+                'errors' => [
+                    'required' => 'Harga harus diisi',
+                    'numeric' => 'Harga harus berupa angka',
+                    'greater_than_equal_to' => 'Harga tidak boleh negatif'
+                ]
             ]
         ];
 
@@ -139,7 +189,8 @@ class Barang extends BaseController
             'nama' => $this->request->getPost('nama'),
             'kategori_id' => $this->request->getPost('kategori_id'),
             'satuan' => $this->request->getPost('satuan'),
-            'deskripsi' => $this->request->getPost('deskripsi')
+            'deskripsi' => $this->request->getPost('deskripsi'),
+            'harga' => $this->request->getPost('harga')
         ];
 
         if (!$this->barangModel->insert($data)) {
@@ -154,6 +205,11 @@ class Barang extends BaseController
         $barang = $this->barangModel->find($id);
         if (!$barang) {
             return redirect()->to('/barang')->with('error', 'Barang tidak ditemukan');
+        }
+
+        // Set default harga if not exists
+        if (!isset($barang['harga'])) {
+            $barang['harga'] = '0';
         }
 
         $data = [
@@ -198,6 +254,14 @@ class Barang extends BaseController
                 'errors' => [
                     'required' => 'Satuan harus dipilih'
                 ]
+            ],
+            'harga' => [
+                'rules' => 'required|numeric|greater_than_equal_to[0]',
+                'errors' => [
+                    'required' => 'Harga harus diisi',
+                    'numeric' => 'Harga harus berupa angka',
+                    'greater_than_equal_to' => 'Harga tidak boleh negatif'
+                ]
             ]
         ];
 
@@ -210,7 +274,8 @@ class Barang extends BaseController
             'nama' => $this->request->getPost('nama'),
             'kategori_id' => $this->request->getPost('kategori_id'),
             'satuan' => $this->request->getPost('satuan'),
-            'deskripsi' => $this->request->getPost('deskripsi')
+            'deskripsi' => $this->request->getPost('deskripsi'),
+            'harga' => $this->request->getPost('harga')
         ];
 
         if (!$this->barangModel->update($id, $data)) {

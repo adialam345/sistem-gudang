@@ -11,10 +11,7 @@ class BarangMasukModel extends Model
     protected $useAutoIncrement = true;
     protected $returnType = 'array';
     protected $useSoftDeletes = false;
-    protected $allowedFields = [
-        'tanggal', 'no_transaksi', 'barang_id', 'kode_barang', 
-        'nama_barang', 'jumlah', 'satuan', 'supplier', 'keterangan'
-    ];
+    protected $allowedFields = ['tanggal', 'no_transaksi', 'barang_id', 'kode_barang', 'nama_barang', 'jumlah', 'satuan', 'harga', 'supplier', 'keterangan'];
     protected $useTimestamps = true;
     protected $createdField = 'created_at';
     protected $updatedField = 'updated_at';

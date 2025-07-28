@@ -11,7 +11,7 @@ class BarangModel extends Model
     protected $useAutoIncrement = true;
     protected $returnType = 'array';
     protected $useSoftDeletes = false;
-    protected $allowedFields = ['kode', 'nama', 'kategori_id', 'satuan', 'deskripsi', 'stok'];
+    protected $allowedFields = ['kode', 'nama', 'kategori_id', 'satuan', 'deskripsi', 'stok', 'harga'];
     protected $useTimestamps = true;
     protected $createdField = 'created_at';
     protected $updatedField = 'updated_at';

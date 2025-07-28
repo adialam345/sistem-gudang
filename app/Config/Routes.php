@@ -36,6 +36,7 @@ $routes->group('', ['filter' => 'auth'], function($routes) {
     $routes->post('barang/update-stok-langsung', 'Barang::updateStokLangsung');
     $routes->get('barang/sync-stok', 'Barang::syncStok');
     $routes->get('barang/sync-stok/(:num)', 'Barang::syncStok/$1');
+    $routes->get('barang/add-price-column', 'Barang::addPriceColumn');
 
     // Barang Masuk Routes
     $routes->get('barang-masuk', 'BarangMasuk::index');

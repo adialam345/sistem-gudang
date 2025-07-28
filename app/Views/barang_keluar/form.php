@@ -7,8 +7,8 @@
         <h1 class="text-2xl font-semibold text-gray-900"><?= isset($barangKeluar) ? 'Edit Barang Keluar' : 'Tambah Barang Keluar' ?></h1>
         <div class="mt-4 sm:mt-0">
             <a href="<?= site_url('barang-keluar') ?>" 
-               class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-warehouse-500">
-                <svg class="-ml-1 mr-2 h-5 w-5 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+               class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500">
+                <svg class="-ml-1 mr-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 17l-5-5m0 0l5-5m-5 5h12" />
                 </svg>
                 Kembali
@@ -57,7 +57,7 @@
                         <label for="barang_id" class="block text-sm font-medium text-gray-700">Barang</label>
                         <div class="mt-1">
                             <select id="barang_id" name="barang_id" 
-                                    class="shadow-sm focus:ring-warehouse-500 focus:border-warehouse-500 block w-full sm:text-sm border-gray-300 rounded-md" 
+                                    class="shadow-sm focus:ring-yellow-500 focus:border-yellow-500 block w-full sm:text-sm border-gray-300 rounded-md" 
                                     required>
                                 <option value="">Pilih Barang</option>
                                 <?php 
@@ -71,6 +71,7 @@
                                             data-nama="<?= esc($item['nama']) ?>"
                                             data-satuan="<?= esc($item['satuan']) ?>"
                                             data-stok="<?= $item['stok'] ?>"
+                                            data-harga="<?= $item['harga'] ?>"
                                             <?= (isset($barangKeluar) && $barangKeluar['barang_id'] == $item['id']) || old('barang_id') == $item['id'] ? 'selected' : '' ?>>
                                         <?= esc($item['kode'] . ' - ' . $item['nama'] . ' (Stok: ' . number_format($item['stok']) . ' ' . $item['satuan'] . ')') ?>
                                     </option>
@@ -91,27 +92,25 @@
 
                     <div class="sm:col-span-3">
                         <label for="jumlah" class="block text-sm font-medium text-gray-700">Jumlah</label>
-                        <div class="mt-1 relative rounded-md shadow-sm">
+                        <div class="mt-1">
                             <input type="number" name="jumlah" id="jumlah" 
-                                   value="<?= isset($barangKeluar) ? $barangKeluar['jumlah'] : old('jumlah') ?>"
-                                   class="shadow-sm focus:ring-warehouse-500 focus:border-warehouse-500 block w-full sm:text-sm border-gray-300 rounded-md" 
-                                   min="1" required>
-                            <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                                <span id="satuan-addon" class="text-gray-500 sm:text-sm"></span>
-                            </div>
+                                   value="<?= isset($barangKeluar) ? esc($barangKeluar['jumlah']) : old('jumlah') ?>"
+                                   class="shadow-sm focus:ring-yellow-500 focus:border-yellow-500 block w-full sm:text-sm border-gray-300 rounded-md" 
+                                   required>
                         </div>
-                        <p id="stok-info" class="mt-2 text-sm text-gray-500"></p>
                         <?php if (isset($validation) && $validation->hasError('jumlah')) : ?>
                             <p class="mt-2 text-sm text-red-600"><?= $validation->getError('jumlah') ?></p>
                         <?php endif; ?>
                     </div>
+
+                    <input type="hidden" name="harga" id="harga" value="<?= isset($barangKeluar) ? esc($barangKeluar['harga']) : old('harga', 0) ?>">
 
                     <div class="sm:col-span-3">
                         <label for="tujuan" class="block text-sm font-medium text-gray-700">Tujuan</label>
                         <div class="mt-1">
                             <input type="text" name="tujuan" id="tujuan" 
                                    value="<?= isset($barangKeluar) ? esc($barangKeluar['tujuan']) : old('tujuan') ?>"
-                                   class="shadow-sm focus:ring-warehouse-500 focus:border-warehouse-500 block w-full sm:text-sm border-gray-300 rounded-md"
+                                   class="shadow-sm focus:ring-yellow-500 focus:border-yellow-500 block w-full sm:text-sm border-gray-300 rounded-md" 
                                    required>
                         </div>
                         <?php if (isset($validation) && $validation->hasError('tujuan')) : ?>
@@ -123,7 +122,7 @@
                         <label for="keterangan" class="block text-sm font-medium text-gray-700">Keterangan</label>
                         <div class="mt-1">
                             <textarea id="keterangan" name="keterangan" rows="3" 
-                                      class="shadow-sm focus:ring-warehouse-500 focus:border-warehouse-500 block w-full sm:text-sm border-gray-300 rounded-md"><?= isset($barangKeluar) ? esc($barangKeluar['keterangan']) : old('keterangan') ?></textarea>
+                                      class="shadow-sm focus:ring-yellow-500 focus:border-yellow-500 block w-full sm:text-sm border-gray-300 rounded-md"><?= isset($barangKeluar) ? esc($barangKeluar['keterangan']) : old('keterangan') ?></textarea>
                         </div>
                         <?php if (isset($validation) && $validation->hasError('keterangan')) : ?>
                             <p class="mt-2 text-sm text-red-600"><?= $validation->getError('keterangan') ?></p>
@@ -138,11 +137,11 @@
 
                 <div class="flex justify-end space-x-3">
                     <button type="reset" 
-                            class="inline-flex justify-center py-2 px-4 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-warehouse-500">
+                            class="inline-flex justify-center py-2 px-4 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500">
                         Reset
                     </button>
                     <button type="submit" 
-                            class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-warehouse-400 hover:bg-warehouse-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-warehouse-500">
+                            class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-yellow-600 hover:bg-yellow-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500">
                         <?= isset($barangKeluar) ? 'Update' : 'Simpan' ?>
                     </button>
                 </div>
@@ -153,41 +152,31 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // Tom Select for barang dropdown
+    new TomSelect('#barang_id', {
+        create: false,
+        sortField: {
+            field: 'text',
+            direction: 'asc'
+        },
+        placeholder: 'Cari atau pilih barang...'
+    });
+
+    // Satuan and price update
     const barangSelect = document.getElementById('barang_id');
-    const jumlahInput = document.getElementById('jumlah');
     const satuanAddon = document.getElementById('satuan-addon');
-    const stokInfo = document.getElementById('stok-info');
-    const kodeBarangInput = document.getElementById('kode_barang');
-    const namaBarangInput = document.getElementById('nama_barang');
-    const satuanInput = document.getElementById('satuan');
-
-    function updateSatuanAndStok() {
+    const hargaInput = document.getElementById('harga');
+    
+    function updateBarangInfo() {
         const selectedOption = barangSelect.options[barangSelect.selectedIndex];
-        const satuan = selectedOption.dataset.satuan || '';
-        satuanAddon.textContent = satuan;
-
-        if (selectedOption.value) {
-            const stok = parseInt(selectedOption.dataset.stok);
-            stokInfo.textContent = `Stok tersedia: ${stok.toLocaleString()} ${satuan}`;
-            jumlahInput.max = stok;
-
-            // Update hidden fields
-            kodeBarangInput.value = selectedOption.dataset.kode || '';
-            namaBarangInput.value = selectedOption.dataset.nama || '';
-            satuanInput.value = satuan;
-        } else {
-            stokInfo.textContent = '';
-            jumlahInput.removeAttribute('max');
-
-            // Clear hidden fields
-            kodeBarangInput.value = '';
-            namaBarangInput.value = '';
-            satuanInput.value = '';
+        if (selectedOption) {
+            satuanAddon.textContent = selectedOption.dataset.satuan || '';
+            hargaInput.value = selectedOption.dataset.harga || 0;
         }
     }
-
-    barangSelect.addEventListener('change', updateSatuanAndStok);
-    updateSatuanAndStok();
+    
+    barangSelect.addEventListener('change', updateBarangInfo);
+    updateBarangInfo();
 
     // Validasi jumlah tidak melebihi stok
     jumlahInput.addEventListener('input', function() {

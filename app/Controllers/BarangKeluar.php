@@ -100,7 +100,6 @@ class BarangKeluar extends BaseController
 
     public function store()
     {
-        // Validate required fields
         $rules = [
             'tanggal' => [
                 'rules' => 'required',
@@ -131,61 +130,43 @@ class BarangKeluar extends BaseController
         ];
 
         if (!$this->validate($rules)) {
-            return redirect()->back()
-                           ->withInput()
-                           ->with('validation', $this->validator)
-                           ->with('error', 'Validasi gagal: ' . implode(', ', $this->validator->getErrors()));
+            return redirect()->back()->withInput()->with('validation', $this->validator);
+        }
+
+        $barang = $this->barangModel->find($this->request->getPost('barang_id'));
+        if (!$barang) {
+            return redirect()->back()->withInput()->with('error', 'Barang tidak ditemukan');
+        }
+
+        // Check if stock is sufficient
+        $jumlah = $this->request->getPost('jumlah');
+        if ($barang['stok'] < $jumlah) {
+            return redirect()->back()->withInput()->with('error', 'Stok tidak mencukupi');
         }
 
         $data = [
             'tanggal' => $this->request->getPost('tanggal'),
             'no_transaksi' => $this->generateTransactionNumber(),
-            'barang_id' => $this->request->getPost('barang_id'),
-            'kode_barang' => $this->request->getPost('kode_barang'),
-            'nama_barang' => $this->request->getPost('nama_barang'),
-            'jumlah' => $this->request->getPost('jumlah'),
-            'satuan' => $this->request->getPost('satuan'),
+            'barang_id' => $barang['id'],
+            'kode_barang' => $barang['kode'],
+            'nama_barang' => $barang['nama'],
+            'jumlah' => $jumlah,
+            'satuan' => $barang['satuan'],
+            'harga' => $barang['harga'],
             'tujuan' => $this->request->getPost('tujuan'),
             'keterangan' => $this->request->getPost('keterangan')
         ];
 
-        $db = \Config\Database::connect();
-        $db->transStart();
-
-        try {
-            // Check if barang exists
-            $barang = $this->barangModel->find($data['barang_id']);
-            if (!$barang) {
-                throw new \Exception('Barang tidak ditemukan');
-            }
-
-            // Check if stock is sufficient
-            $currentStock = $this->getCurrentStock($data['barang_id']);
-            if ($currentStock < $data['jumlah']) {
-                throw new \Exception('Stok tidak mencukupi. Stok tersedia: ' . $currentStock);
-            }
-
-            // Insert barang keluar record
-            if (!$this->barangKeluarModel->insert($data)) {
-                throw new \Exception('Gagal menyimpan data: ' . implode(', ', $this->barangKeluarModel->errors()));
-            }
-
-            // Update stok di tabel barang
-            $this->barangModel->syncStok($data['barang_id']);
-
-            $db->transComplete();
-
-            if ($db->transStatus() === false) {
-                throw new \Exception('Transaksi database gagal');
-            }
-
-            return redirect()->to('/barang-keluar')->with('success', 'Barang keluar berhasil ditambahkan');
-        } catch (\Exception $e) {
-            $db->transRollback();
-            return redirect()->back()
-                           ->withInput()
-                           ->with('error', 'Gagal menambah barang keluar: ' . $e->getMessage());
+        if (!$this->barangKeluarModel->insert($data)) {
+            return redirect()->back()->withInput()->with('error', 'Gagal menambahkan barang keluar');
         }
+
+        // Update stok barang
+        $this->barangModel->update($barang['id'], [
+            'stok' => $barang['stok'] - $data['jumlah']
+        ]);
+
+        return redirect()->to('/barang-keluar')->with('success', 'Barang keluar berhasil ditambahkan');
     }
 
     public function edit($id)
@@ -216,56 +197,77 @@ class BarangKeluar extends BaseController
 
     public function update($id)
     {
-        $oldData = $this->barangKeluarModel->find($id);
-        if (!$oldData) {
-            return redirect()->back()->with('error', 'Data tidak ditemukan');
+        $barangKeluar = $this->barangKeluarModel->find($id);
+        if (!$barangKeluar) {
+            return redirect()->to('/barang-keluar')->with('error', 'Barang keluar tidak ditemukan');
+        }
+
+        $rules = [
+            'tanggal' => [
+                'rules' => 'required',
+                'errors' => [
+                    'required' => 'Tanggal harus diisi'
+                ]
+            ],
+            'barang_id' => [
+                'rules' => 'required',
+                'errors' => [
+                    'required' => 'Barang harus dipilih'
+                ]
+            ],
+            'jumlah' => [
+                'rules' => 'required|numeric|greater_than[0]',
+                'errors' => [
+                    'required' => 'Jumlah harus diisi',
+                    'numeric' => 'Jumlah harus berupa angka',
+                    'greater_than' => 'Jumlah harus lebih dari 0'
+                ]
+            ],
+            'tujuan' => [
+                'rules' => 'required',
+                'errors' => [
+                    'required' => 'Tujuan harus diisi'
+                ]
+            ]
+        ];
+
+        if (!$this->validate($rules)) {
+            return redirect()->back()->withInput()->with('validation', $this->validator);
+        }
+
+        $barang = $this->barangModel->find($this->request->getPost('barang_id'));
+        if (!$barang) {
+            return redirect()->back()->withInput()->with('error', 'Barang tidak ditemukan');
+        }
+
+        // Check if stock is sufficient
+        $jumlah = $this->request->getPost('jumlah');
+        $selisihStok = $jumlah - $barangKeluar['jumlah'];
+        if ($barang['stok'] < $selisihStok) {
+            return redirect()->back()->withInput()->with('error', 'Stok tidak mencukupi');
         }
 
         $data = [
             'tanggal' => $this->request->getPost('tanggal'),
-            'barang_id' => $this->request->getPost('barang_id'),
-            'kode_barang' => $this->request->getPost('kode_barang'),
-            'nama_barang' => $this->request->getPost('nama_barang'),
-            'jumlah' => $this->request->getPost('jumlah'),
-            'satuan' => $this->request->getPost('satuan'),
+            'barang_id' => $barang['id'],
+            'kode_barang' => $barang['kode'],
+            'nama_barang' => $barang['nama'],
+            'jumlah' => $jumlah,
+            'satuan' => $barang['satuan'],
+            'harga' => $barang['harga'],
             'tujuan' => $this->request->getPost('tujuan'),
             'keterangan' => $this->request->getPost('keterangan')
         ];
 
-        $db = \Config\Database::connect();
-        $db->transStart();
-
-        try {
-            // Check if stock is sufficient
-            $currentStock = $this->getCurrentStock($data['barang_id']);
-            if ($data['barang_id'] == $oldData['barang_id']) {
-                $currentStock += $oldData['jumlah']; // Add back the old amount
-            }
-            
-            if ($currentStock < $data['jumlah']) {
-                return redirect()->back()->with('error', 'Stok tidak mencukupi. Stok tersedia: ' . $currentStock);
-            }
-
-            // Update barang keluar record
-            $this->barangKeluarModel->update($id, $data);
-
-            // Update stok di tabel barang
-            $this->barangModel->syncStok($data['barang_id']);
-            if ($data['barang_id'] != $oldData['barang_id']) {
-                $this->barangModel->syncStok($oldData['barang_id']);
-            }
-
-            $db->transComplete();
-
-            if ($db->transStatus() === false) {
-                return redirect()->back()->with('error', 'Gagal mengupdate barang keluar');
-            }
-
-            return redirect()->to('/barang-keluar')->with('success', 'Barang keluar berhasil diupdate');
-        } catch (\Exception $e) {
-            $db->transRollback();
-            return redirect()->back()->with('error', 'Gagal mengupdate barang keluar: ' . $e->getMessage());
+        if (!$this->barangKeluarModel->update($id, $data)) {
+            return redirect()->back()->withInput()->with('error', 'Gagal mengupdate barang keluar');
         }
+
+        // Update stok barang
+        $stokBaru = $barang['stok'] - $selisihStok;
+        $this->barangModel->update($barang['id'], ['stok' => $stokBaru]);
+
+        return redirect()->to('/barang-keluar')->with('success', 'Barang keluar berhasil diupdate');
     }
 
     public function delete($id)

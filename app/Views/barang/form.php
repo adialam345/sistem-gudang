@@ -110,6 +110,29 @@
                         <?php endif; ?>
                     </div>
 
+                    <div class="sm:col-span-3">
+                        <label for="harga" class="block text-sm font-medium text-gray-700">Harga</label>
+                        <div class="mt-1">
+                            <div class="relative rounded-md shadow-sm">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <span class="text-gray-500 sm:text-sm">Rp &nbsp;</span>
+                                </div>
+                                <input type="number" 
+                                       name="harga" 
+                                       id="harga" 
+                                       min="0"
+                                       step="1"
+                                       value="<?= isset($barang) && isset($barang['harga']) ? esc($barang['harga']) : (old('harga') ?? '0') ?>"
+                                       class="pl-10 focus:ring-warehouse-500 focus:border-warehouse-500 block w-full sm:text-sm border-gray-300 rounded-md" 
+                                       required
+                                       style="padding-left: 3rem !important;">
+                            </div>
+                        </div>
+                        <?php if (isset($validation) && $validation->hasError('harga')) : ?>
+                            <p class="mt-2 text-sm text-red-600"><?= $validation->getError('harga') ?></p>
+                        <?php endif; ?>
+                    </div>
+
                     <div class="sm:col-span-6">
                         <label for="deskripsi" class="block text-sm font-medium text-gray-700">Deskripsi</label>
                         <div class="mt-1">
@@ -122,13 +145,13 @@
                     </div>
                 </div>
 
-                <div class="flex justify-end space-x-3">
+                <div class="flex justify-end space-x-3 mt-6">
                     <button type="reset" 
                             class="inline-flex justify-center py-2 px-4 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-warehouse-500">
                         Reset
                     </button>
                     <button type="submit" 
-                            class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-warehouse-400 hover:bg-warehouse-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-warehouse-500">
+                            class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
                         <?= isset($barang) ? 'Update' : 'Simpan' ?>
                     </button>
                 </div>

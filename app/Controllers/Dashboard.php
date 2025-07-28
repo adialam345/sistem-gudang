@@ -45,7 +45,7 @@ class Dashboard extends BaseController
         
         // Jika tipe tidak diset atau 'masuk', tambahkan query barang masuk
         if (!$tipe || $tipe === 'masuk') {
-            $sql .= "SELECT 'masuk' as tipe, tanggal, no_transaksi, kode_barang, nama_barang, jumlah, satuan FROM barang_masuk ";
+            $sql .= "SELECT 'masuk' as tipe, tanggal, no_transaksi, kode_barang, nama_barang, jumlah, satuan, harga FROM barang_masuk ";
             
             if ($search) {
                 $sql .= "WHERE (kode_barang LIKE '%{$search}%' OR nama_barang LIKE '%{$search}%' OR no_transaksi LIKE '%{$search}%') ";
@@ -60,7 +60,7 @@ class Dashboard extends BaseController
             if ($sql) {
                 $sql .= "UNION ALL ";
             }
-            $sql .= "SELECT 'keluar' as tipe, tanggal, no_transaksi, kode_barang, nama_barang, jumlah, satuan FROM barang_keluar ";
+            $sql .= "SELECT 'keluar' as tipe, tanggal, no_transaksi, kode_barang, nama_barang, jumlah, satuan, harga FROM barang_keluar ";
 
             if ($search) {
                 $sql .= "WHERE (kode_barang LIKE '%{$search}%' OR nama_barang LIKE '%{$search}%' OR no_transaksi LIKE '%{$search}%') ";
@@ -102,7 +102,7 @@ class Dashboard extends BaseController
 
         $aktivitas = $this->getAktivitasTerbaru($search, $tanggal_awal, $tanggal_akhir);
         
-        $headers = ['Tanggal', 'No Transaksi', 'Kode Barang', 'Nama Barang', 'Jumlah', 'Satuan', 'Tipe'];
+        $headers = ['Tanggal', 'No Transaksi', 'Kode Barang', 'Nama Barang', 'Harga', 'Jumlah', 'Satuan', 'Tipe'];
         
         $data = array_map(function($item) {
             return [
@@ -110,6 +110,7 @@ class Dashboard extends BaseController
                 $item['no_transaksi'],
                 $item['kode_barang'],
                 $item['nama_barang'],
+                number_format($item['harga'], 0, ',', '.'),
                 $item['jumlah'],
                 $item['satuan'],
                 ucfirst($item['tipe'])

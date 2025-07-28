@@ -115,6 +115,12 @@ class BarangMasuk extends BaseController
                     'numeric' => 'Jumlah harus berupa angka',
                     'greater_than' => 'Jumlah harus lebih dari 0'
                 ]
+            ],
+            'supplier' => [
+                'rules' => 'required',
+                'errors' => [
+                    'required' => 'Supplier harus diisi'
+                ]
             ]
         ];
 
@@ -127,51 +133,29 @@ class BarangMasuk extends BaseController
             return redirect()->back()->withInput()->with('error', 'Barang tidak ditemukan');
         }
 
-        // Generate nomor transaksi: BM/YYYYMMDD/XXXX
-        $tanggal = $this->request->getPost('tanggal');
-        $lastTransaksi = $this->barangMasukModel
-            ->where('DATE(tanggal)', $tanggal)
-            ->orderBy('no_transaksi', 'DESC')
-            ->first();
+        $data = [
+            'tanggal' => $this->request->getPost('tanggal'),
+            'no_transaksi' => $this->generateTransactionNumber(),
+            'barang_id' => $barang['id'],
+            'kode_barang' => $barang['kode'],
+            'nama_barang' => $barang['nama'],
+            'jumlah' => $this->request->getPost('jumlah'),
+            'satuan' => $barang['satuan'],
+            'harga' => $barang['harga'],
+            'supplier' => $this->request->getPost('supplier'),
+            'keterangan' => $this->request->getPost('keterangan')
+        ];
 
-        $counter = 1;
-        if ($lastTransaksi) {
-            // Extract counter from last transaction number
-            $parts = explode('/', $lastTransaksi['no_transaksi']);
-            $counter = intval(end($parts)) + 1;
+        if (!$this->barangMasukModel->insert($data)) {
+            return redirect()->back()->withInput()->with('error', 'Gagal menambahkan barang masuk');
         }
 
-        $noTransaksi = sprintf("BM/%s/%04d", date('Ymd', strtotime($tanggal)), $counter);
+        // Update stok barang
+        $this->barangModel->update($barang['id'], [
+            'stok' => $barang['stok'] + $data['jumlah']
+        ]);
 
-        $this->db->transStart();
-
-        try {
-            // Insert barang masuk
-            $data = [
-                'tanggal' => $tanggal,
-                'no_transaksi' => $noTransaksi,
-                'barang_id' => $barang['id'],
-                'kode_barang' => $barang['kode'],
-                'nama_barang' => $barang['nama'],
-                'jumlah' => $this->request->getPost('jumlah'),
-                'satuan' => $barang['satuan'],
-                'supplier' => $this->request->getPost('supplier'),
-                'keterangan' => $this->request->getPost('keterangan')
-            ];
-
-            if (!$this->barangMasukModel->insert($data)) {
-                throw new \Exception('Gagal menambahkan barang masuk');
-            }
-
-            // Update stok di tabel barang
-            $this->barangModel->syncStok($barang['id']);
-
-            $this->db->transCommit();
-            return redirect()->to('/barang-masuk')->with('success', 'Barang masuk berhasil ditambahkan');
-        } catch (\Exception $e) {
-            $this->db->transRollback();
-            return redirect()->back()->withInput()->with('error', $e->getMessage());
-        }
+        return redirect()->to('/barang-masuk')->with('success', 'Barang masuk berhasil ditambahkan');
     }
 
     public function edit($id)
@@ -195,45 +179,70 @@ class BarangMasuk extends BaseController
     {
         $barangMasuk = $this->barangMasukModel->find($id);
         if (!$barangMasuk) {
-            return redirect()->back()->with('error', 'Data tidak ditemukan');
+            return redirect()->to('/barang-masuk')->with('error', 'Barang masuk tidak ditemukan');
+        }
+
+        $rules = [
+            'tanggal' => [
+                'rules' => 'required',
+                'errors' => [
+                    'required' => 'Tanggal harus diisi'
+                ]
+            ],
+            'barang_id' => [
+                'rules' => 'required',
+                'errors' => [
+                    'required' => 'Barang harus dipilih'
+                ]
+            ],
+            'jumlah' => [
+                'rules' => 'required|numeric|greater_than[0]',
+                'errors' => [
+                    'required' => 'Jumlah harus diisi',
+                    'numeric' => 'Jumlah harus berupa angka',
+                    'greater_than' => 'Jumlah harus lebih dari 0'
+                ]
+            ],
+            'supplier' => [
+                'rules' => 'required',
+                'errors' => [
+                    'required' => 'Supplier harus diisi'
+                ]
+            ]
+        ];
+
+        if (!$this->validate($rules)) {
+            return redirect()->back()->withInput()->with('validation', $this->validator);
         }
 
         $barang = $this->barangModel->find($this->request->getPost('barang_id'));
         if (!$barang) {
-            return redirect()->back()->with('error', 'Barang tidak ditemukan');
+            return redirect()->back()->withInput()->with('error', 'Barang tidak ditemukan');
         }
 
-        $this->db->transStart();
+        $data = [
+            'tanggal' => $this->request->getPost('tanggal'),
+            'barang_id' => $barang['id'],
+            'kode_barang' => $barang['kode'],
+            'nama_barang' => $barang['nama'],
+            'jumlah' => $this->request->getPost('jumlah'),
+            'satuan' => $barang['satuan'],
+            'harga' => $barang['harga'],
+            'supplier' => $this->request->getPost('supplier'),
+            'keterangan' => $this->request->getPost('keterangan')
+        ];
 
-        try {
-            // Update barang masuk
-            $data = [
-                'tanggal' => $this->request->getPost('tanggal'),
-                'barang_id' => $barang['id'],
-                'kode_barang' => $barang['kode'],
-                'nama_barang' => $barang['nama'],
-                'jumlah' => $this->request->getPost('jumlah'),
-                'satuan' => $barang['satuan'],
-                'supplier' => $this->request->getPost('supplier'),
-                'keterangan' => $this->request->getPost('keterangan')
-            ];
+        // Update stok barang
+        $selisihStok = $data['jumlah'] - $barangMasuk['jumlah'];
+        $stokBaru = $barang['stok'] + $selisihStok;
 
-            if (!$this->barangMasukModel->update($id, $data)) {
-                throw new \Exception('Gagal mengupdate barang masuk');
-            }
-
-            // Update stok di tabel barang
-            $this->barangModel->syncStok($barang['id']);
-            if ($barang['id'] != $barangMasuk['barang_id']) {
-                $this->barangModel->syncStok($barangMasuk['barang_id']);
-            }
-
-            $this->db->transCommit();
-            return redirect()->to('/barang-masuk')->with('success', 'Barang masuk berhasil diupdate');
-        } catch (\Exception $e) {
-            $this->db->transRollback();
-            return redirect()->back()->withInput()->with('error', $e->getMessage());
+        if (!$this->barangMasukModel->update($id, $data)) {
+            return redirect()->back()->withInput()->with('error', 'Gagal mengupdate barang masuk');
         }
+
+        $this->barangModel->update($barang['id'], ['stok' => $stokBaru]);
+
+        return redirect()->to('/barang-masuk')->with('success', 'Barang masuk berhasil diupdate');
     }
 
     public function delete($id)
